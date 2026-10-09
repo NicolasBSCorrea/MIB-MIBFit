@@ -58,7 +58,7 @@ th,td{padding:8px 6px}td input,td select{min-width:104px}.big{font-size:24px}
 .sh{padding:16px}.sb{padding:14px}.ft{padding:12px 14px}.bn{font-size:24px}.tt{font-size:19px}.xr{flex-wrap:wrap}.xi{width:100%}.xi img,.ph{height:120px}.xs{width:100%}.xs .pl{flex:1}.sr{grid-template-columns:58px 1fr 1fr}}
 @media print{aside,header,.np{display:none!important}.app{display:block}body{background:#fff}main{padding:0;max-width:none}.sheet{box-shadow:none;border-radius:0}.xr,.al{break-inside:avoid}.sht{break-after:avoid}}
 </style></head><body>
-<div class="app"><aside id="nav"></aside><div class="mn"><header><div class="lg"><img src="logo.png" alt="" onerror="this.style.display='none'">MIB <span>Fit</span></div><div style="flex:0 1 300px"><select id="sel" onchange="S.sid=this.value;save();R()"></select></div></header><main id="m"></main></div></div>
+<div class="app"><aside id="nav"></aside><div class="mn"><header><div class="lg"><img src="logo.png" alt="" onerror="this.style.display='none'">MIB <span>Fit</span></div><span id="cs" class="mu"></span><div style="flex:0 1 300px"><select id="sel" onchange="S.sid=this.value;save();R()"></select></div></header><main id="m"></main></div></div>
 <script>
 const G=['Peito','Costas','Ombros','Bíceps','Tríceps','Quadríceps','Posterior','Glúteos','Abdômen','Panturrilha'];
 const PN=['Cervical','Ombro','Cotovelo','Punho/mão','Coluna torácica','Lombar','Quadril','Joelho','Tornozelo/pé'];
@@ -68,16 +68,39 @@ const T=[['aluno','Alunos'],['avaliacao','Avaliação física'],['treino','Trein
 let S;try{S=JSON.parse(localStorage.getItem('mibfit')||'null')}catch(e){}
 S=S||{students:[],plans:[],lib:[],sid:'',tab:'aluno',model:'simples',q:'',d:{pid:'',name:'',obs:'',days:[]}};
 S.checkins=S.checkins||[];S.ci=S.ci||{};S.sq=S.sq||'';S.ag=S.ag||[];S.profs=S.profs||[];let A={};try{A=JSON.parse(sessionStorage.getItem('mibA')||'{}')}catch(e){}
-const save=()=>{try{localStorage.setItem('mibfit',JSON.stringify(S))}catch(e){alert('Armazenamento cheio: use imagens menores.')}};
+const saveLocal=()=>{try{localStorage.setItem('mibfit',JSON.stringify(S))}catch(e){alert('Armazenamento cheio: use imagens menores.')}};
+const save=()=>{saveLocal();if(cloud.on&&A.role=='prof')sched()};
+/* NUVEM: alunos e exercícios no banco de dados */
+const cloud={on:false,snap:{a:{},e:{}}};let tm;
+const cst=t=>{const e=document.getElementById('cs');if(e)e.textContent=t};
+async function api(p,o={}){const r=await fetch('/api/'+p,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+(sessionStorage.getItem('mibT')||'')}});let j={};try{j=await r.json()}catch(e){}
+ if(r.status==401&&p!='login'){setA({});alert('Sessão expirada. Entre novamente.');throw new Error('Sessão expirada')}
+ if(!r.ok)throw new Error(j.erro||'Erro '+r.status);return j}
+const snapOf=()=>{const o={a:{},e:{}};S.students.forEach(x=>o.a[x.id]=JSON.stringify(x));S.lib.forEach(x=>o.e[x.id]=JSON.stringify(x));return o};
+const sched=()=>{clearTimeout(tm);cst('☁ salvando…');tm=setTimeout(push,800)};
+async function pull(){cst('☁ sincronizando…');
+ try{const [a,e]=await Promise.all([api('dados?t=alunos'),api('dados?t=exercicios')]),first=!S.cl,sn={a:{},e:{}};
+  a.alunos.forEach(x=>sn.a[x.id]=JSON.stringify(x));e.exercicios.forEach(x=>sn.e[x.id]=JSON.stringify(x));
+  const mg=(sv,lc)=>{const m=new Set(sv.map(x=>x.id));return sv.concat(lc.filter(x=>!m.has(x.id)))};
+  S.students=first?mg(a.alunos,S.students):a.alunos;S.lib=first?mg(e.exercicios,S.lib):e.exercicios;
+  if(!S.students.some(x=>x.id==S.sid))S.sid='';
+  S.cl=1;cloud.snap=sn;cloud.on=true;saveLocal();R();await push()}
+ catch(x){cst('⚠ sem conexão com a nuvem: '+x.message)}}
+async function push(){const cur=snapOf(),B=[],nb=()=>({alunos:{up:[],del:[]},exercicios:{up:[],del:[]}});let b=nb(),z=0;
+ const add=(k,x)=>{const n=JSON.stringify(x).length;if(z+n>3e6){B.push(b);b=nb();z=0}b[k].up.push(x);z+=n};
+ const map={a:['alunos',S.students],e:['exercicios',S.lib]};
+ for(const k in map){const [nm,L]=map[k];L.forEach(x=>{if(cloud.snap[k][x.id]!==cur[k][x.id])add(nm,x)});for(const id in cloud.snap[k])if(!(id in cur[k]))b[nm].del.push(id)}
+ B.push(b);if(!B.some(x=>x.alunos.up.length||x.alunos.del.length||x.exercicios.up.length||x.exercicios.del.length)){cst('☁ sincronizado');return}
+ try{for(const x of B)await api('dados',{method:'POST',body:JSON.stringify(x)});cloud.snap=cur;cst('☁ salvo na nuvem')}catch(e){cst('⚠ não salvou: '+e.message)}}
 const uid=()=>Math.random().toString(36).slice(2,9),$=id=>document.getElementById(id),v=id=>$(id).value;
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const st=()=>S.students.find(s=>s.id===S.sid),D=()=>S.d,allEx=()=>D().days.flatMap(d=>d.ex.map(e=>({...e,day:d.n})));
 const today=()=>new Date().toLocaleDateString('en-CA'),fd=d=>String(d).split('-').reverse().join('/');
-function setA(a){A=a;if(a.role)sessionStorage.setItem('mibA',JSON.stringify(a));else sessionStorage.removeItem('mibA');R()}
+function setA(a){A=a;if(a.role)sessionStorage.setItem('mibA',JSON.stringify(a));else{sessionStorage.removeItem('mibA');sessionStorage.removeItem('mibT');cloud.on=false}R()}
 const h256=async t=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(),dg=s=>String(s||'').replace(/\D/g,'');
-function vLogin(){const f=!S.pw;return `<div class="row" style="max-width:780px;margin:30px auto"><div class="card"><h3>Professor</h3><label>${f?'Primeiro acesso: crie uma senha':'Senha'}</label><input id="lp" type="password" onkeydown="if(event.key=='Enter')plogin()"><div class="mt"><button class="btn" onclick="plogin()">${f?'Criar senha e entrar':'Entrar'}</button></div></div><div class="card"><h3>Aluno</h3><label>CPF ou nome completo</label><input id="la" placeholder="Digite seu CPF ou nome completo" onkeydown="if(event.key=='Enter')alogin()"><div class="mt"><button class="btn o" onclick="alogin()">Entrar</button></div><p class="mu" id="le"></p></div></div>`}
-async function plogin(){const p=v('lp');if(!p)return;if(!S.pw){if(p.length<4)return alert('Use ao menos 4 caracteres.');S.pw=await h256(p);save()}else if(await h256(p)!==S.pw)return alert('Senha incorreta.');S.tab='aluno';setA({role:'prof'})}
+function vLogin(){const f=!S.pw;return `<div class="row" style="max-width:780px;margin:30px auto"><div class="card"><h3>Professor</h3><label>Senha do professor</label><input id="lp" type="password" onkeydown="if(event.key=='Enter')plogin()"><div class="mt"><button class="btn" onclick="plogin()">Entrar</button></div></div><div class="card"><h3>Aluno</h3><label>CPF ou nome completo</label><input id="la" placeholder="Digite seu CPF ou nome completo" onkeydown="if(event.key=='Enter')alogin()"><div class="mt"><button class="btn o" onclick="alogin()">Entrar</button></div><p class="mu" id="le"></p></div></div>`}
+async function plogin(){const p=v('lp');if(!p)return;try{const r=await api('login',{method:'POST',body:JSON.stringify({senha:p})});sessionStorage.setItem('mibT',r.token);S.tab='aluno';setA({role:'prof'});pull()}catch(e){alert(e.message)}}
 function alogin(){const q=v('la').trim(),d=dg(q),m=S.students.filter(a=>d.length>=11?dg(a.cpf)==d:norm(a.name)==norm(q));
  if(!q||!m.length)return $('le').textContent='Aluno não encontrado. Confira o CPF ou o nome completo.';
  if(m.length>1)return $('le').textContent='Há mais de um aluno com esse nome. Entre com o CPF.';
@@ -100,7 +123,7 @@ function vAluno(){const s=st()||{},age=s.birth?Math.floor((Date.now()-new Date(s
 <div class="card tw"><h3>Alunos cadastrados (${S.students.length})</h3><input placeholder="🔍 Buscar por nome completo ou CPF" value="${esc(S.sq)}" oninput="S.sq=this.value;$('sl').innerHTML=stRows()"><table class="mt"><tr><th>Nome</th><th>CPF</th><th>Objetivo</th><th>Dores</th></tr><tbody id="sl">${stRows()}</tbody></table></div>
 <div class="card"><h3>Backup dos dados</h3><p class="mu">Enquanto não há banco de dados, tudo fica salvo neste navegador. Exporte para levar os dados a outro aparelho.</p><div class="bar"><button class="btn g" onclick="expD()">⬇ Exportar</button><button class="btn g" onclick="impD()">⬆ Importar</button></div></div>`}
 function expD(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mibfit-backup.json';a.click()}
-function impD(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.students)throw 0;S=d;S.checkins=S.checkins||[];S.ci=S.ci||{};S.ag=S.ag||[];S.profs=S.profs||[];S.sq='';save();R()}catch(e){alert('Arquivo inválido.')}};i.click()}
+function impD(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.students)throw 0;S=d;S.checkins=S.checkins||[];S.ci=S.ci||{};S.ag=S.ag||[];S.profs=S.profs||[];S.sq='';S.cl=0;cloud.on=false;saveLocal();R();if(A.role=='prof')pull()}catch(e){alert('Arquivo inválido.')}};i.click()}
 function saveAluno(ed){const n=v('an').trim();if(!n)return;const d={name:n,cpf:v('acpf').trim(),birth:v('ab'),sex:v('as'),tel:v('at'),goal:v('ao'),freq:v('af'),notes:v('ax'),pains:[...document.querySelectorAll('.pn:checked')].map(x=>x.value)};
  if(ed)Object.assign(st(),d);else{const a={id:uid(),ev:[],...d};S.students.push(a);S.sid=a.id}save();R()}
 function delAluno(){if(confirm('Excluir este aluno e seus dados?')){S.students=S.students.filter(a=>a.id!=S.sid);S.plans=S.plans.filter(p=>p.sid!=S.sid);S.checkins=S.checkins.filter(c=>c.sid!=S.sid);S.ag=S.ag.filter(b=>b.sid!=S.sid);S.sid='';save();R()}}
@@ -131,7 +154,7 @@ function lq(b,q){const r=$('r_'+b);q=q.trim().toLowerCase();if(!q){r.innerHTML='
  r.innerHTML=L.map(x=>`<div class="rs" onclick="pick('${b}','${x.id}')">${imgsOf(x)[0]?`<img src="${imgsOf(x)[0]}">`:''}<span><b>${esc(x.n)}</b> <span class="mu">${esc(x.g)}</span></span></div>`).join('')||'<div class="mu" style="padding:8px">Nada encontrado. Preencha o nome abaixo e ele será salvo na biblioteca.</div>'}
 function pick(b,i){const l=S.lib.find(x=>x.id==i),e=allE(b);e.n=l.n;e.g=l.g;e.imgs=[...imgsOf(l)];delete e.img;save();R()}
 function allE(b){for(const y of D().days){const e=y.ex.find(x=>x.id==b);if(e)return e}}
-function resize(f,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,360/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.7))};i.src=r.result};r.readAsDataURL(f)}
+function resize(f,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,320/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.65))};i.src=r.result};r.readAsDataURL(f)}
 function pickImg(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>resize(i.files[0],cb);i.click()}
 function addImg(a,b){pickImg(u=>{const e=ex(a,b);e.imgs=[...imgsOf(e),u];delete e.img;syncLib(e);save();R()})}
 function rmImg(a,b,i){const e=ex(a,b);e.imgs=imgsOf(e).filter((_,k)=>k!=i);delete e.img;save();R()}
@@ -214,5 +237,5 @@ function savePlan(){const d=D();if(!d.days.length){alert('Adicione ao menos uma 
 function vSalvos(){const L=S.plans.filter(p=>!S.sid||p.sid==S.sid);return `<div class="card"><h3>Treinos salvos</h3><button class="btn g" onclick="S.d={pid:'',name:'',obs:'',days:[]};S.tab='treino';save();R()">Novo treino (limpar tela)</button>${L.map(p=>{const a=S.students.find(x=>x.id==p.sid);return `<div class="ex"><div class="bd"><b>${esc(p.name)}</b><div class="mu">${esc(a?a.name:'')} · ${esc(p.date)} · ${p.days.length} sessões</div></div><button class="btn g" onclick="loadPlan('${p.id}')">Carregar</button><button class="btn d" onclick="delPlan('${p.id}')">Excluir</button></div>`}).join('')||'<p class="mu">Nenhum treino salvo.</p>'}</div>`}
 function loadPlan(i){const p=S.plans.find(x=>x.id==i);S.sid=p.sid;S.d=JSON.parse(JSON.stringify({pid:p.id,name:p.name,obs:p.obs,days:p.days}));S.tab='treino';save();R()}
 function delPlan(i){if(confirm('Excluir treino salvo?')){S.plans=S.plans.filter(p=>p.id!=i);if(D().pid==i)D().pid='';save();R()}}
-R();
+R();if(A.role=='prof'&&sessionStorage.getItem('mibT'))pull();
 </script></body></html>
