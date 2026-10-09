@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIB Fit — Montador de Treinos</title>
+<link rel="icon" href="icone.png">
+<style>
+:root{--gr:#14532d;--ac:#1f7a4d;--ac2:#e8f3ec;--gd:#c9a227;--gd2:#fbf5de;--bg:#faf9f5;--card:#fff;--tx:#1d2b24;--mu:#6b756f;--bd:#e4e1d6}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.app{display:flex;min-height:100vh}.mn{flex:1;min-width:0}
+aside{width:210px;flex:none;background:var(--gr);padding:14px 10px;position:sticky;top:0;height:100vh;overflow:auto;border-right:4px solid var(--gd)}
+aside button{display:block;width:100%;text-align:left;border:0;background:none;color:#d6e8dc;padding:10px 12px;margin-bottom:2px;border-radius:8px;font:inherit;cursor:pointer}
+aside button.on{background:rgba(255,255,255,.14);color:#fff;font-weight:600;box-shadow:inset 3px 0 var(--gd)}
+header{background:var(--card);border-bottom:2px solid var(--gd);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.lg{display:flex;align-items:center;gap:8px;font-weight:800;font-size:22px;color:var(--ac)}.lg span{color:var(--gd)}.lg img{height:36px}
+main{max-width:940px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+h3{margin:0 0 10px;font-size:16px}h3:before{content:"";display:inline-block;width:4px;height:15px;background:var(--gd);border-radius:2px;margin-right:8px;vertical-align:-2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 130px}
+label{display:block;font-size:12px;color:var(--mu);margin-bottom:2px}
+input,select,textarea{width:100%;font-size:16px;padding:9px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--tx);font:inherit}
+textarea{min-height:56px}input:focus,select:focus,textarea:focus{outline:2px solid var(--gd2);border-color:var(--gd)}
+.btn{min-height:40px;background:var(--ac);color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
+.btn.g{background:#fff;color:var(--ac);border:1px solid var(--ac)}.btn.d{background:#fff;color:#b42318;border:1px solid #f0c4bf}.btn.o{background:var(--gd);color:#241c00}
+.mu{color:var(--mu);font-size:13px}.tw{overflow-x:auto}.mt{margin-top:10px}.bar{display:flex;gap:8px;flex-wrap:wrap}
+.ck{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--bd);border-radius:20px;margin:0 6px 6px 0;font-size:14px;color:var(--tx);cursor:pointer}.ck input{width:auto}
+.ck:has(input:checked){background:var(--gd2);border-color:var(--gd)}
+.ex{display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid var(--bd);padding:12px 0}
+.im{width:110px;height:110px;border-radius:10px;background:var(--gd2);border:1px dashed var(--gd);object-fit:cover;display:flex;align-items:center;justify-content:center;color:#7a6410;font-size:12px;text-align:center;cursor:pointer}
+.bd{flex:1 1 230px}
+.res{border:1px solid var(--bd);border-radius:8px;margin-top:2px;background:#fff}.res:empty{display:none}
+.rs{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--bd)}.rs:hover{background:var(--ac2)}.rs img{width:36px;height:36px;border-radius:6px;object-fit:cover}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left}th{background:var(--ac2);color:var(--gr);border-bottom:2px solid var(--gd)}
+.big{font-size:28px;font-weight:700;color:var(--ac)}
+details{border-bottom:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;font-weight:600}
+.sheet{background:#fff;max-width:794px;margin:0 auto;box-shadow:0 4px 22px rgba(0,0,0,.2);border-radius:6px;overflow:hidden}
+.sh{background:linear-gradient(135deg,var(--gr),#1f7a4d);color:#fff;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:6px solid var(--gd)}
+.bn{font-size:30px;font-weight:800;letter-spacing:.5px}.bn span{color:var(--gd)}.ss{font-size:11px;opacity:.85;letter-spacing:1.5px;text-transform:uppercase}
+.sd2{text-align:right;font-size:12px}.sd2 span{display:block;opacity:.8}.sd2 b{font-size:15px}
+.sb{padding:22px 26px}.tt{margin:0 0 12px;color:var(--gr);font-size:22px}
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}.if{background:var(--bg);border:1px solid var(--bd);border-left:4px solid var(--gd);border-radius:8px;padding:6px 10px}.if span{display:block;font-size:11px;color:var(--mu);text-transform:uppercase}.if b{font-size:14px}
+.al{background:var(--gd2);border:1px solid #ecd98a;border-left:5px solid var(--gd);border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px}
+.sec{margin-top:18px}.sht{display:flex;justify-content:space-between;align-items:center;background:var(--gr);color:#fff;border-radius:8px;padding:8px 12px;border-left:6px solid var(--gd);font-weight:700}.sht i{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--gd);color:#241c00;align-items:center;justify-content:center;font-style:normal;margin-right:8px;font-size:13px}.sht small{opacity:.8;font-weight:400}
+.xr{display:flex;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--bd);align-items:center}.xi{display:flex;gap:4px;flex:none;width:112px}.xi img{flex:1;min-width:0;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)}
+.ph{flex:1;height:84px;border-radius:8px;background:var(--ac2);color:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px}
+.xb{flex:1;min-width:0}.xn{font-weight:700;font-size:15px}.tg{display:inline-block;background:var(--ac2);color:var(--gr);border-radius:20px;padding:1px 9px;font-size:11px;margin:3px 4px 0 0}.tg.g2{background:var(--gd2);color:#7a6410}.xo{font-size:12.5px;color:var(--mu);margin-top:4px}
+.xs{display:flex;gap:6px;flex:none}.pl{text-align:center;background:var(--ac2);border-radius:10px;padding:6px 10px;min-width:72px}.pl b{display:block;font-size:17px;color:var(--gr)}.pl span{font-size:10px;color:var(--mu);text-transform:uppercase}.pl.l{background:var(--gd2)}.pl.l b{color:#7a6410}
+.ob{margin-top:16px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:14px;white-space:pre-wrap}.ft{margin-top:22px;padding:12px 26px;background:var(--bg);border-top:2px solid var(--gd);font-size:12px;color:var(--mu);text-align:center}
+.sr{display:grid;grid-template-columns:70px 1fr 1fr;gap:8px;align-items:end;margin-top:8px}
+.gal{display:flex;gap:6px;flex-wrap:wrap;max-width:260px;align-content:flex-start}.gal .im{width:80px;height:80px}
+.th{position:relative}.th img{width:80px;height:80px;object-fit:cover;border-radius:8px;display:block}.th b{position:absolute;top:-5px;right:-5px;background:#b42318;color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;font-size:12px;cursor:pointer;line-height:18px}
+@media(max-width:800px){.app{display:block}aside{width:auto;height:auto;display:flex;overflow-x:auto;position:sticky;top:0;z-index:5;padding:6px;border-right:0;border-bottom:3px solid var(--gd)}aside button{width:auto;white-space:nowrap;margin:0 2px}}
+@media(max-width:600px){body{font-size:16px}main{padding:10px}.card{padding:14px;margin-bottom:12px}
+.row>*{flex:1 1 100%!important}.row.c2>*{flex:1 1 calc(50% - 5px)!important}
+.ex{flex-direction:column;gap:10px}.ex .bd{flex:1 1 auto}.gal{max-width:none}.gal .im,.th img{width:92px;height:92px}
+.btn{min-height:44px;padding:10px 14px}.bar .btn{flex:1 1 auto}input,select,textarea{padding:11px}
+header{padding:10px 12px}header>div:last-child{flex:1 1 100%!important}aside{scrollbar-width:none}aside button{padding:11px 14px}
+th,td{padding:8px 6px}td input,td select{min-width:104px}.big{font-size:24px}
+.sh{padding:16px}.sb{padding:14px}.ft{padding:12px 14px}.bn{font-size:24px}.tt{font-size:19px}.xr{flex-wrap:wrap}.xi{width:100%}.xi img,.ph{height:120px}.xs{width:100%}.xs .pl{flex:1}.sr{grid-template-columns:58px 1fr 1fr}}
+@media print{aside,header,.np{display:none!important}.app{display:block}body{background:#fff}main{padding:0;max-width:none}.sheet{box-shadow:none;border-radius:0}.xr,.al{break-inside:avoid}.sht{break-after:avoid}}
+</style></head><body>
+<div class="app"><aside id="nav"></aside><div class="mn"><header><div class="lg"><img src="logo.png" alt="" onerror="this.style.display='none'">MIB <span>Fit</span></div><span id="cs" class="mu"></span><div style="flex:0 1 300px"><select id="sel" onchange="S.sid=this.value;save();R()"></select></div></header><main id="m"></main></div></div>
+<script>
+const G=['Peito','Costas','Ombros','Bíceps','Tríceps','Quadríceps','Posterior','Glúteos','Abdômen','Panturrilha'];
+const PN=['Cervical','Ombro','Cotovelo','Punho/mão','Coluna torácica','Lombar','Quadril','Joelho','Tornozelo/pé'];
+const MET=[['Série simples','Uma série por vez, com descanso completo entre elas. Base para iniciantes e para aprender o movimento.'],['Séries múltiplas','Várias séries do mesmo exercício (ex.: 3 a 4 x 8-12). Método mais usado para hipertrofia e força.'],['Pirâmide crescente','Carga aumenta e repetições diminuem a cada série. Aquece progressivamente até a carga máxima.'],['Pirâmide decrescente','Começa com a carga mais alta e reduz nas séries seguintes, com mais repetições.'],['Bi-set','Dois exercícios seguidos, sem descanso, do mesmo músculo ou de músculos antagonistas.'],['Tri-set','Três exercícios seguidos para o mesmo grupo muscular, sem descanso.'],['Drop-set','Ao atingir a falha, reduz a carga e continua imediatamente. Alta intensidade, usar com moderação.'],['Rest-pause','Série até a falha, pausa curta (10-20 s) e novas repetições com a mesma carga.'],['Circuito','Sequência de exercícios para vários grupos, com pouco descanso. Foco em condicionamento.']];
+const ZON=[['Força máxima','1 a 6 reps','2-5 min'],['Hipertrofia','6 a 12 reps','60-120 s'],['Resistência muscular','15+ reps','30-60 s']];
+const T=[['aluno','Alunos'],['avaliacao','Avaliação física'],['treino','Treino'],['lib','Biblioteca'],['volume','Volume'],['metodo','Metodologia'],['previa','Pré-visualização PDF'],['salvos','Treinos salvos'],['hist','Histórico'],['ag','Agenda'],['prof','Professores']];const TA=[['meu','Meu treino'],['ag','Agendamento'],['hist','Histórico']];
+let S;try{S=JSON.parse(localStorage.getItem('mibfit')||'null')}catch(e){}
+S=S||{students:[],plans:[],lib:[],sid:'',tab:'aluno',model:'simples',q:'',d:{pid:'',name:'',obs:'',days:[]}};
+S.checkins=S.checkins||[];S.ci=S.ci||{};S.sq=S.sq||'';S.ag=S.ag||[];S.profs=S.profs||[];let A={};try{A=JSON.parse(sessionStorage.getItem('mibA')||'{}')}catch(e){}
+const saveLocal=()=>{try{localStorage.setItem('mibfit',JSON.stringify(S))}catch(e){alert('Armazenamento cheio: use imagens menores.')}};
+const save=()=>{saveLocal();if(cloud.on&&A.role=='prof')sched()};
+/* NUVEM: alunos e exercícios no banco de dados */
+const cloud={on:false,snap:{a:{},e:{}}};let tm;
+const cst=t=>{const e=document.getElementById('cs');if(e)e.textContent=t};
+async function api(p,o={}){const r=await fetch('/api/'+p,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+(sessionStorage.getItem('mibT')||'')}});let j={};try{j=await r.json()}catch(e){}
+ if(r.status==401&&p!='login'){setA({});alert('Sessão expirada. Entre novamente.');throw new Error('Sessão expirada')}
+ if(!r.ok)throw new Error(j.erro||'Erro '+r.status);return j}
+const snapOf=()=>{const o={a:{},e:{}};S.students.forEach(x=>o.a[x.id]=JSON.stringify(x));S.lib.forEach(x=>o.e[x.id]=JSON.stringify(x));return o};
+const sched=()=>{clearTimeout(tm);cst('☁ salvando…');tm=setTimeout(push,800)};
+async function pull(){cst('☁ sincronizando…');
+ try{const [a,e]=await Promise.all([api('dados?t=alunos'),api('dados?t=exercicios')]),first=!S.cl,sn={a:{},e:{}};
+  a.alunos.forEach(x=>sn.a[x.id]=JSON.stringify(x));e.exercicios.forEach(x=>sn.e[x.id]=JSON.stringify(x));
+  const mg=(sv,lc)=>{const m=new Set(sv.map(x=>x.id));return sv.concat(lc.filter(x=>!m.has(x.id)))};
+  S.students=first?mg(a.alunos,S.students):a.alunos;S.lib=first?mg(e.exercicios,S.lib):e.exercicios;
+  if(!S.students.some(x=>x.id==S.sid))S.sid='';
+  S.cl=1;cloud.snap=sn;cloud.on=true;saveLocal();R();await push()}
+ catch(x){cst('⚠ sem conexão com a nuvem: '+x.message)}}
+async function push(){const cur=snapOf(),B=[],nb=()=>({alunos:{up:[],del:[]},exercicios:{up:[],del:[]}});let b=nb(),z=0;
+ const add=(k,x)=>{const n=JSON.stringify(x).length;if(z+n>3e6){B.push(b);b=nb();z=0}b[k].up.push(x);z+=n};
+ const map={a:['alunos',S.students],e:['exercicios',S.lib]};
+ for(const k in map){const [nm,L]=map[k];L.forEach(x=>{if(cloud.snap[k][x.id]!==cur[k][x.id])add(nm,x)});for(const id in cloud.snap[k])if(!(id in cur[k]))b[nm].del.push(id)}
+ B.push(b);if(!B.some(x=>x.alunos.up.length||x.alunos.del.length||x.exercicios.up.length||x.exercicios.del.length)){cst('☁ sincronizado');return}
+ try{for(const x of B)await api('dados',{method:'POST',body:JSON.stringify(x)});cloud.snap=cur;cst('☁ salvo na nuvem')}catch(e){cst('⚠ não salvou: '+e.message)}}
+const uid=()=>Math.random().toString(36).slice(2,9),$=id=>document.getElementById(id),v=id=>$(id).value;
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const st=()=>S.students.find(s=>s.id===S.sid),D=()=>S.d,allEx=()=>D().days.flatMap(d=>d.ex.map(e=>({...e,day:d.n})));
+const today=()=>new Date().toLocaleDateString('en-CA'),fd=d=>String(d).split('-').reverse().join('/');
+function setA(a){A=a;if(a.role)sessionStorage.setItem('mibA',JSON.stringify(a));else{sessionStorage.removeItem('mibA');sessionStorage.removeItem('mibT');cloud.on=false}R()}
+const h256=async t=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(),dg=s=>String(s||'').replace(/\D/g,'');
+function vLogin(){const f=!S.pw;return `<div class="row" style="max-width:780px;margin:30px auto"><div class="card"><h3>Professor</h3><label>Senha do professor</label><input id="lp" type="password" onkeydown="if(event.key=='Enter')plogin()"><div class="mt"><button class="btn" onclick="plogin()">Entrar</button></div></div><div class="card"><h3>Aluno</h3><label>CPF ou nome completo</label><input id="la" placeholder="Digite seu CPF ou nome completo" onkeydown="if(event.key=='Enter')alogin()"><div class="mt"><button class="btn o" onclick="alogin()">Entrar</button></div><p class="mu" id="le"></p></div></div>`}
+async function plogin(){const p=v('lp');if(!p)return;try{const r=await api('login',{method:'POST',body:JSON.stringify({senha:p})});sessionStorage.setItem('mibT',r.token);S.tab='aluno';setA({role:'prof'});pull()}catch(e){alert(e.message)}}
+function alogin(){const q=v('la').trim(),d=dg(q),m=S.students.filter(a=>d.length>=11?dg(a.cpf)==d:norm(a.name)==norm(q));
+ if(!q||!m.length)return $('le').textContent='Aluno não encontrado. Confira o CPF ou o nome completo.';
+ if(m.length>1)return $('le').textContent='Há mais de um aluno com esse nome. Entre com o CPF.';
+ S.tab='meu';setA({role:'aluno',sid:m[0].id})}
+function R(){if(A.role=='aluno'&&!S.students.some(x=>x.id==A.sid))A={};
+ const al=A.role=='aluno',tb=al?TA:T,sp=$('sel').parentElement;
+ if(!A.role){$('nav').innerHTML='';sp.style.display='none';$('m').innerHTML=vLogin();return}
+ if(al)S.sid=A.sid;if(!tb.some(t=>t[0]==S.tab))S.tab=tb[0][0];
+ $('nav').innerHTML=tb.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="S.tab='${t[0]}';save();R();scrollTo(0,0)">${t[1]}</button>`).join('')+'<button onclick="setA({})" style="margin-top:12px;color:#f3d77a">⎋ Sair</button>';
+ sp.style.display=al?'none':'';
+ $('sel').innerHTML='<option value="">— selecione o aluno —</option>'+S.students.map(s=>`<option value="${s.id}" ${s.id==S.sid?'selected':''}>${esc(s.name)}</option>`).join('');
+ const t=S.tab;$('m').innerHTML=!st()&&['avaliacao','hist'].includes(t)?'<div class="card">Cadastre e selecione um aluno na aba <b>Alunos</b>.</div>':({aluno:vAluno,avaliacao:vAval,treino:vTreino,lib:vLib,volume:vVol,metodo:vMetodo,previa:vPrev,salvos:vSalvos,meu:vMeu,hist:vHist,ag:vAg,prof:vProf})[t](st());if(t=='ag')busy()}
+/* ALUNOS */
+const stRows=()=>{const q=norm(S.sq),d=dg(S.sq);return S.students.filter(a=>!q||norm(a.name).includes(q)||(d&&dg(a.cpf).includes(d))).map(a=>`<tr style="cursor:pointer" onclick="S.sid='${a.id}';save();R()"><td><b>${esc(a.name)}</b></td><td>${esc(a.cpf)}</td><td>${esc(a.goal)}</td><td>${esc((a.pains||[]).join(', '))}</td></tr>`).join('')||'<tr><td colspan="4" class="mu">Nenhum aluno encontrado.</td></tr>'};
+function vAluno(){const s=st()||{},age=s.birth?Math.floor((Date.now()-new Date(s.birth))/31557600000):'',pn=s.pains||[];return `<div class="card"><h3>${s.id?'Aluno: '+esc(s.name):'Novo aluno'}</h3><div class="row"><div style="flex:2 1 220px"><label>Nome completo</label><input id="an" value="${esc(s.name)}"></div><div><label>CPF (login do aluno)</label><input id="acpf" inputmode="numeric" value="${esc(s.cpf)}"></div><div><label>Nascimento ${age!==''?'('+age+' anos)':''}</label><input id="ab" type="date" value="${esc(s.birth)}"></div><div><label>Sexo biológico</label><select id="as"><option ${s.sex=='Feminino'?'selected':''}>Feminino</option><option ${s.sex=='Masculino'?'selected':''}>Masculino</option></select></div></div>
+<div class="row mt"><div><label>Telefone</label><input id="at" value="${esc(s.tel)}"></div><div><label>Objetivo</label><input id="ao" value="${esc(s.goal)}"></div><div><label>Frequência semanal</label><input id="af" type="number" value="${esc(s.freq)}"></div></div>
+<h3 style="margin-top:18px">Dores localizadas</h3><div>${PN.map(p=>`<label class="ck"><input type="checkbox" class="pn" value="${p}" ${pn.includes(p)?'checked':''}>${p}</label>`).join('')}</div>
+<h3 style="margin-top:14px">Anotações (uso interno)</h3><textarea id="ax" placeholder="Lesões, restrições, histórico de treino...">${esc(s.notes)}</textarea>
+<div class="bar mt"><button class="btn" onclick="saveAluno(${!!s.id})">${s.id?'Salvar alterações':'Cadastrar aluno'}</button>${s.id?`<button class="btn g" onclick="S.sid='';save();R()">Novo aluno</button><button class="btn d" onclick="delAluno()">Excluir</button>`:''}</div></div>
+<div class="card tw"><h3>Alunos cadastrados (${S.students.length})</h3><input placeholder="🔍 Buscar por nome completo ou CPF" value="${esc(S.sq)}" oninput="S.sq=this.value;$('sl').innerHTML=stRows()"><table class="mt"><tr><th>Nome</th><th>CPF</th><th>Objetivo</th><th>Dores</th></tr><tbody id="sl">${stRows()}</tbody></table></div>
+<div class="card"><h3>Backup dos dados</h3><p class="mu">Enquanto não há banco de dados, tudo fica salvo neste navegador. Exporte para levar os dados a outro aparelho.</p><div class="bar"><button class="btn g" onclick="expD()">⬇ Exportar</button><button class="btn g" onclick="impD()">⬆ Importar</button></div></div>`}
+function expD(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mibfit-backup.json';a.click()}
+function impD(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.students)throw 0;S=d;S.checkins=S.checkins||[];S.ci=S.ci||{};S.ag=S.ag||[];S.profs=S.profs||[];S.sq='';S.cl=0;cloud.on=false;saveLocal();R();if(A.role=='prof')pull()}catch(e){alert('Arquivo inválido.')}};i.click()}
+function saveAluno(ed){const n=v('an').trim();if(!n)return;const d={name:n,cpf:v('acpf').trim(),birth:v('ab'),sex:v('as'),tel:v('at'),goal:v('ao'),freq:v('af'),notes:v('ax'),pains:[...document.querySelectorAll('.pn:checked')].map(x=>x.value)};
+ if(ed)Object.assign(st(),d);else{const a={id:uid(),ev:[],...d};S.students.push(a);S.sid=a.id}save();R()}
+function delAluno(){if(confirm('Excluir este aluno e seus dados?')){S.students=S.students.filter(a=>a.id!=S.sid);S.plans=S.plans.filter(p=>p.sid!=S.sid);S.checkins=S.checkins.filter(c=>c.sid!=S.sid);S.ag=S.ag.filter(b=>b.sid!=S.sid);S.sid='';save();R()}}
+/* AVALIAÇÃO */
+const AF=[['peso','Peso (kg)'],['alt','Altura (cm)'],['gord','% Gordura'],['peito','Peito (cm)'],['cint','Cintura (cm)'],['quad','Quadril (cm)'],['braco','Braço (cm)'],['coxa','Coxa (cm)']];
+function vAval(s){return `<div class="card"><h3>Nova avaliação — ${esc(s.name)}</h3><div class="row c2"><div><label>Data</label><input id="ev_d" type="date" value="${today()}"></div>${AF.map(f=>`<div><label>${f[1]}</label><input id="ev_${f[0]}" type="number" step="0.1"></div>`).join('')}</div><label class="mt">Observações</label><textarea id="ev_o"></textarea><div class="mt"><button class="btn" onclick="addEv()">Salvar avaliação</button></div></div>
+<div class="card tw"><h3>Histórico</h3><table><tr><th>Data</th>${AF.map(f=>`<th>${f[1].split(' (')[0]}</th>`).join('')}<th>IMC</th><th></th></tr>${s.ev.slice().reverse().map(e=>{const i=e.peso&&e.alt?(e.peso/((e.alt/100)**2)).toFixed(1):'-';return `<tr><td>${esc(e.d)}</td>${AF.map(f=>`<td>${esc(e[f[0]])||'-'}</td>`).join('')}<td>${i}</td><td><button class="btn d" onclick="delEv('${e.id}')">×</button></td></tr>${e.o?`<tr><td colspan="11" class="mu">${esc(e.o)}</td></tr>`:''}`}).join('')}</table></div>`}
+function addEv(){const e={id:uid(),d:v('ev_d'),o:v('ev_o')};AF.forEach(f=>e[f[0]]=v('ev_'+f[0]));st().ev.push(e);save();R()}
+function delEv(i){const s=st();s.ev=s.ev.filter(e=>e.id!=i);save();R()}
+/* TREINO */
+function vTreino(){const d=D();return `<div class="card"><h3>Treino</h3><div class="row"><div style="flex:2 1 220px"><label>Nome do treino</label><input value="${esc(d.name)}" placeholder="Ex.: Hipertrofia — ABC" onchange="D().name=this.value;save()"></div></div><label class="mt">Observações gerais</label><textarea onchange="D().obs=this.value;save()">${esc(d.obs)}</textarea></div>
+${d.days.map(y=>`<div class="card"><div class="row" style="align-items:end"><div style="flex:3 1 200px"><label>Sessão</label><input value="${esc(y.n)}" onchange="day('${y.id}').n=this.value;save()"></div><button class="btn g" onclick="addEx('${y.id}')">+ Exercício</button><button class="btn d" onclick="delDay('${y.id}')">Remover sessão</button></div>
+${y.ex.map(e=>`<div class="ex"><div class="gal">${imgsOf(e).map((u,i)=>`<div class="th"><img src="${u}"><b onclick="rmImg('${y.id}','${e.id}',${i})">×</b></div>`).join('')}<div class="im" onclick="addImg('${y.id}','${e.id}')">+ Adicionar imagem</div></div><div class="bd"><label>🔍 Buscar na biblioteca (nome ou grupo)</label><input placeholder="Digite para buscar exercícios já registrados" oninput="lq('${e.id}',this.value)"><div class="res" id="r_${e.id}"></div>
+<div class="row mt"><div style="flex:2 1 160px"><label>Exercício</label><input value="${esc(e.n)}" onchange="up('${y.id}','${e.id}','n',this.value)"></div><div><label>Grupo</label><select onchange="up('${y.id}','${e.id}','g',this.value)">${G.map(g=>`<option ${g==e.g?'selected':''}>${g}</option>`).join('')}</select></div></div>
+<div class="row c2 mt"><div><label>Séries</label><input type="number" value="${esc(e.s)}" onchange="up('${y.id}','${e.id}','s',this.value)"></div><div><label>Reps</label><input value="${esc(e.r)}" onchange="up('${y.id}','${e.id}','r',this.value)"></div><div><label>Descanso (s)</label><input type="number" value="${esc(e.d)}" onchange="up('${y.id}','${e.id}','d',this.value)"></div><div><label>Método</label><select onchange="up('${y.id}','${e.id}','m',this.value)">${MET.map(m=>`<option ${m[0]==e.m?'selected':''}>${m[0]}</option>`).join('')}</select></div></div>
+<label class="ck mt"><input type="checkbox" ${e.sv===false?'':'checked'} onchange="up('${y.id}','${e.id}','sv',this.checked)">Salvar este exercício na biblioteca</label><label class="mt">Observação do exercício</label><textarea onchange="up('${y.id}','${e.id}','o',this.value)">${esc(e.o)}</textarea><button class="btn d mt" onclick="delEx('${y.id}','${e.id}')">Remover exercício</button></div></div>`).join('')||'<p class="mu">Sem exercícios nesta sessão.</p>'}</div>`).join('')}
+<div class="bar"><button class="btn g" onclick="addDay()">+ Adicionar sessão</button><button class="btn" onclick="savePlan()">💾 Salvar treino</button><button class="btn o" onclick="S.tab='previa';save();R()">📄 Ver PDF</button></div>`}
+const day=i=>D().days.find(y=>y.id==i),ex=(a,b)=>day(a).ex.find(e=>e.id==b);
+function addDay(){D().days.push({id:uid(),n:'Treino '+String.fromCharCode(65+D().days.length),ex:[]});save();R()}
+function delDay(i){if(confirm('Remover sessão?')){D().days=D().days.filter(y=>y.id!=i);save();R()}}
+function addEx(i){day(i).ex.push({id:uid(),n:'',g:G[0],s:'3',r:'10',d:'60',m:MET[1][0],o:'',img:''});save();R()}
+function delEx(a,b){const y=day(a);y.ex=y.ex.filter(e=>e.id!=b);save();R()}
+function up(a,b,k,x){const e=ex(a,b);e[k]=x;if(k=='n'||k=='g'||k=='sv')syncLib(e);save();if(k=='g')R()}
+const imgsOf=e=>e.imgs||(e.img?[e.img]:[]);
+function syncLib(e){if(e.sv===false)return;const n=e.n.trim();if(!n)return;const l=S.lib.find(x=>x.n.toLowerCase()==n.toLowerCase()),im=imgsOf(e);if(!l)S.lib.push({id:uid(),n,g:e.g,imgs:[...im]});else{l.g=e.g;l.imgs=[...new Set([...imgsOf(l),...im])];delete l.img}}
+function lq(b,q){const r=$('r_'+b);q=q.trim().toLowerCase();if(!q){r.innerHTML='';return}
+ const L=S.lib.filter(x=>(x.n+' '+x.g).toLowerCase().includes(q)).slice(0,6);
+ r.innerHTML=L.map(x=>`<div class="rs" onclick="pick('${b}','${x.id}')">${imgsOf(x)[0]?`<img src="${imgsOf(x)[0]}">`:''}<span><b>${esc(x.n)}</b> <span class="mu">${esc(x.g)}</span></span></div>`).join('')||'<div class="mu" style="padding:8px">Nada encontrado. Preencha o nome abaixo e ele será salvo na biblioteca.</div>'}
+function pick(b,i){const l=S.lib.find(x=>x.id==i),e=allE(b);e.n=l.n;e.g=l.g;e.imgs=[...imgsOf(l)];delete e.img;save();R()}
+function allE(b){for(const y of D().days){const e=y.ex.find(x=>x.id==b);if(e)return e}}
+function resize(f,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,320/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.65))};i.src=r.result};r.readAsDataURL(f)}
+function pickImg(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>resize(i.files[0],cb);i.click()}
+function addImg(a,b){pickImg(u=>{const e=ex(a,b);e.imgs=[...imgsOf(e),u];delete e.img;syncLib(e);save();R()})}
+function rmImg(a,b,i){const e=ex(a,b);e.imgs=imgsOf(e).filter((_,k)=>k!=i);delete e.img;save();R()}
+/* BIBLIOTECA */
+function vLib(){return `<div class="card"><h3>Biblioteca de exercícios (${S.lib.length})</h3><p class="mu">Todo exercício digitado no Treino é salvo aqui automaticamente, com grupo e imagem.</p><div class="row"><input placeholder="🔍 Buscar por nome ou grupo" value="${esc(S.q)}" oninput="S.q=this.value;$('ll').innerHTML=libRows()" style="flex:3 1 200px"><button class="btn" onclick="S.lib.unshift({id:uid(),n:'Novo exercício',g:G[0],img:''});save();R()">+ Novo exercício</button></div><div id="ll">${libRows()}</div></div>`}
+function libRows(){const q=(S.q||'').toLowerCase();return S.lib.filter(x=>(x.n+' '+x.g).toLowerCase().includes(q)).map(x=>`<div class="ex"><div class="gal">${imgsOf(x).map((u,i)=>`<div class="th"><img src="${u}"><b onclick="libRm('${x.id}',${i})">×</b></div>`).join('')}<div class="im" onclick="libImg('${x.id}')">+ Adicionar imagem</div></div><div class="bd"><label>Nome</label><input value="${esc(x.n)}" onchange="libUp('${x.id}','n',this.value)"><label class="mt">Grupo</label><select onchange="libUp('${x.id}','g',this.value)">${G.map(g=>`<option ${g==x.g?'selected':''}>${g}</option>`).join('')}</select><button class="btn d mt" onclick="libDel('${x.id}')">Excluir</button></div></div>`).join('')||'<p class="mu">Nenhum exercício encontrado.</p>'}
+function libUp(i,k,x){S.lib.find(l=>l.id==i)[k]=x;save()}
+function libImg(i){pickImg(u=>{const l=S.lib.find(z=>z.id==i);l.imgs=[...imgsOf(l),u];delete l.img;save();R()})}
+function libRm(i,k){const l=S.lib.find(z=>z.id==i);l.imgs=imgsOf(l).filter((_,j)=>j!=k);delete l.img;save();R()}
+function libDel(i){if(confirm('Excluir da biblioteca?')){S.lib=S.lib.filter(l=>l.id!=i);save();R()}}
+/* ALUNO: TREINO, CHECK-IN E HISTÓRICO */
+const last=(s,id)=>{for(let i=S.checkins.length-1;i>=0;i--){const c=S.checkins[i];if(c.sid==s.id){const t=c.items.find(x=>x.ex==id&&(x.c||x.r));if(t)return{c:+t.c||0,r:avg(t.r)}}}};
+const latestPlan=sid=>S.plans.filter(p=>p.sid==sid).slice(-1)[0];
+function vMeu(s){const p=latestPlan(s.id);if(!p)return '<div class="card">Seu professor ainda não montou seu treino.</div>';
+ const c=S.ci[s.id]=S.ci[s.id]||{day:'',it:{},obs:''};if(!p.days.some(y=>y.id==c.day))c.day=(p.days[0]||{}).id||'';const y=p.days.find(z=>z.id==c.day);
+ return `<div class="card"><h3>${esc(p.name)}</h3><div class="mu">Olá, ${esc(s.name)}! Escolha o dia de treino:</div><div class="bar mt">${p.days.map(z=>`<button class="btn ${z.id==c.day?'':'g'}" onclick="S.ci['${s.id}'].day='${z.id}';save();R()">${esc(z.n)}</button>`).join('')}</div>${p.obs?`<p class="mu">${esc(p.obs)}</p>`:''}</div>
+${y?y.ex.map(e=>{const t=c.it[e.id]||{},l=last(s,e.id);return `<div class="card"><div class="ex" style="border:0;padding:0"><div class="gal">${imgsOf(e).map(u=>`<div class="th"><img src="${u}"></div>`).join('')}</div><div class="bd"><b>${esc(e.n)}</b> <span class="mu">${esc(e.g)}</span><div>${esc(e.s)} x ${esc(e.r)} · descanso ${esc(e.d)} s · ${esc(e.m)}</div>${e.o?`<div class="mu">Professor: ${esc(e.o)}</div>`:''}
+${setsUI(e,t,l)}<label class="mt">Sensações / opinião sobre o exercício</label><textarea onchange="ci('${e.id}','o',this.value)">${esc(t.o)}</textarea></div></div></div>`}).join(''):''}
+<div class="card"><h3>Observações do treino de hoje</h3><textarea onchange="S.ci['${s.id}'].obs=this.value;save()" placeholder="Como se sentiu? Qual sua opinião sobre o treino?">${esc(c.obs)}</textarea><div class="mt"><button class="btn o" onclick="checkin()">✅ Fazer check-in (registrar treino)</button></div></div>`}
+const fmtSets=i=>i.sets&&i.sets.length?i.sets.map((x,k)=>`S${k+1}: ${x.c||'-'}×${x.r||'-'}`).join(' · '):`${i.c||'-'} kg × ${i.r||'-'}`;
+function setsUI(e,t,l){const c=S.ci[S.sid],q=c.it[e.id]=c.it[e.id]||{},n=Math.max(1,+e.s||1);q.sets=q.sets||[];while(q.sets.length<n)q.sets.push({c:'',r:''});q.sets.length=n;
+ return `<div class="mt"><div class="mu">${n} série${n>1?'s':''} · meta: ${esc(e.r)} reps${l?' · última carga: '+l.c+' kg':''}</div>${q.sets.map((x,k)=>`<div class="sr"><b>Série ${k+1}</b><div><label>Carga (kg)</label><input type="number" step="0.5" inputmode="decimal" value="${esc(x.c)}" onchange="cs('${e.id}',${k},'c',this.value)"></div><div><label>Reps</label><input type="number" inputmode="numeric" value="${esc(x.r)}" onchange="cs('${e.id}',${k},'r',this.value)"></div></div>`).join('')}</div>`}
+const gt=e=>{const c=S.ci[S.sid];return c.it[e]=c.it[e]||{}};
+function sy(t){const L=t.sets.filter(x=>x.c||x.r);t.c=Math.max(0,...L.map(x=>+x.c||0))||'';t.r=L.map(x=>x.r||0).join('/')}
+function cs(e,k,f,x){const t=gt(e);t.sets[k][f]=x;sy(t);save()}
+function ci(e,k,x){const c=S.ci[S.sid];(c.it[e]=c.it[e]||{})[k]=x;save()}
+function checkin(){const s=st(),p=latestPlan(s.id),c=S.ci[s.id],y=p.days.find(z=>z.id==c.day),items=y.ex.map(e=>({ex:e.id,n:e.n,...(c.it[e.id]||{})})).filter(x=>x.c||x.r||x.o);
+ if(!items.length)return alert('Anote carga, repetições ou observações de ao menos um exercício.');
+ S.checkins.push({id:uid(),sid:s.id,plan:p.id,day:y.id,dn:y.n,date:today(),at:new Date().toISOString(),items,obs:c.obs||''});
+ S.ci[s.id]={day:c.day,it:{},obs:''};save();alert('Check-in registrado! Bom treino 💪');R()}
+function vHist(s){const L=S.checkins.filter(c=>c.sid==s.id),ev={};L.forEach(c=>c.items.forEach(i=>{if(i.c||i.r)(ev[i.n]=ev[i.n]||[]).push(`${fd(c.date)}: ${fmtSets(i)}`)}));
+ return `<div class="card tw"><h3>Evolução por exercício — ${esc(s.name)}</h3><table><tr><th>Exercício</th><th>Carga × reps a cada check-in</th></tr>${Object.entries(ev).map(([n,a])=>`<tr><td>${esc(n)}</td><td>${a.map(esc).join(' → ')}</td></tr>`).join('')||'<tr><td colspan="2" class="mu">Sem check-ins ainda.</td></tr>'}</table></div>
+<div class="card tw"><h3>Check-ins (${L.length})</h3>${L.slice().reverse().map(c=>`<details><summary>${fd(c.date)} · ${esc(c.dn)}</summary><table><tr><th>Exercício</th><th>Carga</th><th>Reps</th><th>Sensações</th></tr>${c.items.map(i=>`<tr><td>${esc(i.n)}</td>${i.sets&&i.sets.length?`<td colspan="2">${esc(fmtSets(i))}</td>`:`<td>${esc(i.c)} kg</td><td>${esc(i.r)}</td>`}<td>${esc(i.o)}</td></tr>`).join('')}</table>${c.obs?`<p class="mu">Observações: ${esc(c.obs)}</p>`:''}</details>`).join('')||'<p class="mu">Nenhum check-in registrado.</p>'}</div>`}
+/* AGENDA E PROFESSORES */
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),mins=t=>{const a=String(t).split(':');return +a[0]*60+ +a[1]};
+const profName=id=>(S.profs.find(p=>p.id==id)||{name:'(removido)'}).name;
+function conflict(b,ig){const s1=mins(b.time),e1=s1+ +b.dur;for(const o of S.ag){if(o.id==ig||o.date!=b.date)continue;const s2=mins(o.time),e2=s2+ +o.dur;if(s1<e2&&s2<e1){if(o.pid==b.pid)return 'Esse professor já tem atendimento nesse horário.';if(o.sid==b.sid)return 'Esse aluno já tem um agendamento nesse horário.'}}return ''}
+function busy(){if(!$('ag_p'))return;const p=v('ag_p'),d=v('ag_d'),L=S.ag.filter(o=>o.pid==p&&o.date==d).sort((a,b)=>mins(a.time)-mins(b.time));$('ag_b').innerHTML=p&&d?(L.length?'Horários ocupados com este professor: '+L.map(o=>`<b>${o.time}–${hm(mins(o.time)+ +o.dur)}</b>`).join(', '):'Nenhum horário ocupado com este professor nesse dia.'):''}
+function vAg(){const al=A.role=='aluno',s=st(),L=(al?S.ag.filter(b=>b.sid==s.id):S.ag).slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ if(!S.profs.length)return `<div class="card">${al?'Ainda não há professores cadastrados. Fale com o professor.':'Cadastre ao menos um professor na aba <b>Professores</b>.'}</div>`;
+ const po=S.profs.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ return `<div class="card"><h3>Novo agendamento</h3><div class="row c2">${al?'':`<div><label>Aluno</label><select id="ag_s">${S.students.map(a=>`<option value="${a.id}" ${a.id==S.sid?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`}<div><label>Professor</label><select id="ag_p" onchange="busy()">${po}</select></div><div><label>Data</label><input id="ag_d" type="date" min="${today()}" value="${today()}" onchange="busy()"></div><div><label>Horário</label><input id="ag_t" type="time"></div><div><label>Duração</label><select id="ag_u"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="90">90 min</option></select></div><div style="flex:2 1 200px"><label>Local</label><input id="ag_l" placeholder="Ex.: academia, unidade, sala"></div></div><p class="mu" id="ag_b"></p><button class="btn" onclick="agAdd()">Agendar</button></div>
+<div class="card tw"><h3>${al?'Meus agendamentos':'Agenda (todos os alunos)'}</h3>${al?'<p class="mu">Para alterar ou cancelar um agendamento, fale com o professor.</p>':''}<table><tr>${al?'':'<th>Aluno</th>'}<th>Professor</th><th>Data</th><th>Horário</th><th>Duração</th><th>Local</th>${al?'':'<th></th>'}</tr>${L.map(b=>al?`<tr><td>${esc(profName(b.pid))}</td><td>${fd(b.date)}</td><td>${esc(b.time)}</td><td>${esc(b.dur)} min</td><td>${esc(b.loc)}</td></tr>`:`<tr><td>${esc((S.students.find(a=>a.id==b.sid)||{}).name)}</td><td><select onchange="agUp('${b.id}','pid',this.value)">${S.profs.map(p=>`<option value="${p.id}" ${p.id==b.pid?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td><td><input type="date" value="${b.date}" onchange="agUp('${b.id}','date',this.value)"></td><td><input type="time" value="${b.time}" onchange="agUp('${b.id}','time',this.value)"></td><td><select onchange="agUp('${b.id}','dur',this.value)">${[30,45,60,90].map(n=>`<option value="${n}" ${n==b.dur?'selected':''}>${n} min</option>`).join('')}</select></td><td><input value="${esc(b.loc)}" onchange="agUp('${b.id}','loc',this.value)"></td><td><button class="btn d" onclick="agDel('${b.id}')">×</button></td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum agendamento.</td></tr>'}</table></div>`}
+function agAdd(){const al=A.role=='aluno',b={id:uid(),sid:al?S.sid:v('ag_s'),pid:v('ag_p'),date:v('ag_d'),time:v('ag_t'),dur:v('ag_u'),loc:v('ag_l').trim(),at:new Date().toISOString()};
+ if(!b.sid||!b.pid||!b.date||!b.time||!b.loc)return alert('Preencha professor, data, horário e local.');
+ if(al&&new Date(b.date+'T'+b.time)<new Date())return alert('Escolha uma data e um horário futuros.');
+ const m=conflict(b);if(m)return alert(m);S.ag.push(b);save();alert('Agendamento registrado!');R()}
+function agUp(i,k,x){if(A.role!='prof')return;const b=S.ag.find(z=>z.id==i),n={...b,[k]:x};if(!n.date||!n.time||!n.loc.trim()){R();return}const m=conflict(n,i);if(m){alert(m);R();return}Object.assign(b,n);save();R()}
+function agDel(i){if(A.role=='prof'&&confirm('Cancelar este agendamento?')){S.ag=S.ag.filter(b=>b.id!=i);save();R()}}
+function vProf(){return `<div class="card"><h3>Novo professor</h3><div class="row"><div style="flex:2 1 200px"><label>Nome</label><input id="pf_n"></div><div><label>Telefone</label><input id="pf_t"></div><div><label>Especialidade / CREF</label><input id="pf_e"></div></div><div class="mt"><button class="btn" onclick="addProf()">Cadastrar professor</button></div></div>
+<div class="card tw"><h3>Professores (${S.profs.length})</h3><table><tr><th>Nome</th><th>Telefone</th><th>Especialidade / CREF</th><th></th></tr>${S.profs.map(p=>`<tr><td><input value="${esc(p.name)}" onchange="pfUp('${p.id}','name',this.value)"></td><td><input value="${esc(p.tel)}" onchange="pfUp('${p.id}','tel',this.value)"></td><td><input value="${esc(p.esp)}" onchange="pfUp('${p.id}','esp',this.value)"></td><td><button class="btn d" onclick="pfDel('${p.id}')">×</button></td></tr>`).join('')||'<tr><td colspan="4" class="mu">Nenhum professor cadastrado.</td></tr>'}</table></div>`}
+function addProf(){const n=v('pf_n').trim();if(!n)return;S.profs.push({id:uid(),name:n,tel:v('pf_t'),esp:v('pf_e')});save();R()}
+function pfUp(i,k,x){S.profs.find(p=>p.id==i)[k]=x;save()}
+function pfDel(i){if(S.ag.some(b=>b.pid==i))return alert('Este professor tem agendamentos. Remova-os antes de excluir.');if(confirm('Excluir professor?')){S.profs=S.profs.filter(p=>p.id!=i);save();R()}}
+/* VOLUME */
+const avg=t=>{const n=String(t).match(/\d+/g);return n?n.reduce((a,b)=>a+ +b,0)/n.length:0};
+function vVol(s){let tot=0;const gs={};
+ const rows=allEx().map(e=>{const l=s?last(s,e.id):0,c=l?l.c:0,vol=(+e.s||0)*avg(e.r)*c,rm=l&&l.r?l.c*(1+l.r/30):0;tot+=vol;gs[e.g]=(gs[e.g]||0)+(+e.s||0);return `<tr><td>${esc(e.n)}</td><td>${esc(e.s)} x ${esc(e.r)}</td><td>${c?c+' kg':'-'}</td><td>${Math.round(vol)} kg</td><td>${rm?rm.toFixed(1)+' kg':'-'}</td></tr>`}).join('');
+ return `<div class="card"><h3>Volume máximo de treino</h3><div class="mu">Volume total estimado (séries × reps × última carga registrada)</div><div class="big">${Math.round(tot).toLocaleString('pt-BR')} kg</div></div>
+<div class="card tw"><table><tr><th>Exercício</th><th>Prescrição</th><th>Última carga</th><th>Volume</th><th>1RM estimado</th></tr>${rows}</table><p class="mu">1RM estimado (Epley): carga × (1 + reps/30), com a última carga e reps da aba Cargas.</p></div>
+<div class="card"><h3>Séries por grupo muscular</h3>${Object.entries(gs).map(([g,n])=>`<div class="row"><span>${g}</span><b style="flex:0 0 auto">${n} séries</b></div>`).join('')||'<span class="mu">Sem dados.</span>'}</div>
+<div class="card"><h3>Calculadora de 1RM</h3><div class="row c2"><div><label>Carga (kg)</label><input id="k_c" type="number" oninput="calc()"></div><div><label>Repetições</label><input id="k_r" type="number" oninput="calc()"></div></div><div class="big" id="k_o">-</div><div class="mu" id="k_t"></div></div>`}
+function calc(){const c=+v('k_c'),r=+v('k_r');if(!c||!r){$('k_o').textContent='-';$('k_t').textContent='';return}const m=c*(1+r/30);$('k_o').textContent=m.toFixed(1)+' kg';$('k_t').textContent=`Força: ${(m*.9).toFixed(0)} kg (90%) · Hipertrofia: ${(m*.75).toFixed(0)} kg (75%) · Resistência: ${(m*.6).toFixed(0)} kg (60%)`}
+/* METODOLOGIA */
+function vMetodo(){return `<div class="card"><h3>Metodologia de treino</h3><p class="mu">Resumo dos métodos clássicos de treinamento de força, na linha do <i>Manual de Musculação</i> (Uchida et al.). Conferir detalhes no livro.</p>${MET.map(m=>`<details><summary>${m[0]}</summary><p>${m[1]}</p></details>`).join('')}</div><div class="card tw"><h3>Zonas de treino (referência geral)</h3><table><tr><th>Objetivo</th><th>Repetições</th><th>Descanso</th></tr>${ZON.map(z=>`<tr><td>${z[0]}</td><td>${z[1]}</td><td>${z[2]}</td></tr>`).join('')}</table></div>`}
+/* PDF */
+function sheet(){const s=st(),d=D(),full=S.model=='completo',P=s&&(s.pains||[]).length,n=d.days.reduce((a,y)=>a+y.ex.length,0);
+ const inf=(l,x)=>x?`<div class="if"><span>${l}</span><b>${esc(x)}</b></div>`:'';
+ return `<div class="sheet"><div class="sh"><div><div class="bn">MIB <span>Fit</span></div><div class="ss">Projeto de treino personalizado</div></div><div class="sd2"><span>Emitido em</span><b>${fd(today())}</b></div></div><div class="sb"><h2 class="tt">${esc(d.name||'Treino')}</h2>
+<div class="ig">${inf('Aluno',s&&s.name)}${inf('Objetivo',s&&s.goal)}${inf('Frequência',s&&s.freq?s.freq+'x por semana':'')}${inf('Sessões',d.days.length)}${inf('Exercícios',n)}</div>
+${P?`<div class="al"><b>⚠ Atenção — dores localizadas:</b> ${s.pains.map(esc).join(', ')}</div>`:''}
+${d.days.map((y,i)=>`<div class="sec"><div class="sht"><span><i>${String.fromCharCode(65+i%26)}</i>${esc(y.n)}</span><small>${y.ex.length} exercício${y.ex.length==1?'':'s'}</small></div>${y.ex.map((e,k)=>`<div class="xr"><div class="xi">${imgsOf(e).slice(0,2).map(u=>`<img src="${u}">`).join('')||`<div class="ph">${k+1}</div>`}</div><div class="xb"><div class="xn">${esc(e.n||'Exercício')}</div><span class="tg">${esc(e.g)}</span>${full&&e.m?`<span class="tg g2">${esc(e.m)}</span>`:''}${full&&e.o?`<div class="xo">${esc(e.o)}</div>`:''}</div><div class="xs"><div class="pl"><b>${esc(e.s)}×${esc(e.r)}</b><span>séries × reps</span></div><div class="pl l"><b>${esc(e.d)}s</b><span>descanso</span></div></div></div>`).join('')||'<p class="mu">Sem exercícios.</p>'}</div>`).join('')||'<p class="mu">Monte o treino na aba Treino.</p>'}
+${d.obs?`<div class="ob"><b>Observações gerais</b><br>${esc(d.obs)}</div>`:''}</div><div class="ft">MIB Fit · Em caso de dor ou desconforto, interrompa o exercício e avise seu professor.</div></div>`}
+function vPrev(){const f=S.model=='completo';return `<div class="card np"><h3>Pré-visualização do PDF</h3><div class="row" style="align-items:end"><div><label>Modelo</label><select onchange="S.model=this.value;save();R()"><option value="simples" ${!f?'selected':''}>Simples (séries, reps, descanso)</option><option value="completo" ${f?'selected':''}>Completo (imagens, método, observações)</option></select></div><button class="btn o" onclick="print()">⬇ Baixar PDF</button></div><p class="mu">No diálogo de impressão, escolha "Salvar como PDF".</p></div>${sheet()}`}
+/* SALVOS */
+function savePlan(){const d=D();if(!d.days.length){alert('Adicione ao menos uma sessão.');return}if(!st()){alert('Selecione um aluno.');return}
+ const c=JSON.parse(JSON.stringify(d));c.name=c.name||'Treino '+today();
+ const p=S.plans.find(x=>x.id==c.pid);if(p){Object.assign(p,{name:c.name,obs:c.obs,days:c.days,date:today()});save();alert('Treino atualizado.');return}
+ const n={id:uid(),sid:S.sid,name:c.name,obs:c.obs,days:c.days,date:today()};S.plans.push(n);D().pid=n.id;save();alert('Treino salvo.')}
+function vSalvos(){const L=S.plans.filter(p=>!S.sid||p.sid==S.sid);return `<div class="card"><h3>Treinos salvos</h3><button class="btn g" onclick="S.d={pid:'',name:'',obs:'',days:[]};S.tab='treino';save();R()">Novo treino (limpar tela)</button>${L.map(p=>{const a=S.students.find(x=>x.id==p.sid);return `<div class="ex"><div class="bd"><b>${esc(p.name)}</b><div class="mu">${esc(a?a.name:'')} · ${esc(p.date)} · ${p.days.length} sessões</div></div><button class="btn g" onclick="loadPlan('${p.id}')">Carregar</button><button class="btn d" onclick="delPlan('${p.id}')">Excluir</button></div>`}).join('')||'<p class="mu">Nenhum treino salvo.</p>'}</div>`}
+function loadPlan(i){const p=S.plans.find(x=>x.id==i);S.sid=p.sid;S.d=JSON.parse(JSON.stringify({pid:p.id,name:p.name,obs:p.obs,days:p.days}));S.tab='treino';save();R()}
+function delPlan(i){if(confirm('Excluir treino salvo?')){S.plans=S.plans.filter(p=>p.id!=i);if(D().pid==i)D().pid='';save();R()}}
+R();if(A.role=='prof'&&sessionStorage.getItem('mibT'))pull();
+</script></body></html>
