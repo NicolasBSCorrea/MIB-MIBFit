@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MIB Fit — Montador de Treinos</title>
-<link rel="icon" href="icone.png"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+<link rel="icon" href="icone.png"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{--gr:#14532d;--ac:#1f7a4d;--ac2:#e8f3ec;--gd:#c9a227;--gd2:#fbf5de;--bg:#faf9f5;--card:#fff;--tx:#1d2b24;--mu:#6b756f;--bd:#e4e1d6}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -249,16 +249,58 @@ ${d.days.map(y=>`<div class="sec"><div class="sht"><span>${esc(y.n)}</span><smal
 </div><div class="ft">MIB Fit · Em caso de dor ou desconforto, interrompa o exercício e avise seu professor.</div></div>`}
 function vPrev(){const f=S.model=='completo';return `<div class="card np"><div class="row" style="align-items:end"><div><label>Modelo</label><select onchange="S.model=this.value;save();pdfUp()"><option value="simples" ${!f?'selected':''}>PDF simples</option><option value="completo" ${f?'selected':''}>PDF completo (método, observações e vídeo)</option></select></div><button class="btn" onclick="pdfUp()">Atualizar</button><button class="btn" onclick="pdfDl()">Baixar PDF</button></div><p class="mu">Se a prévia não aparecer no celular, use <a href="#" onclick="pdfOpen();return false" style="color:var(--ac)">abrir em nova aba</a>.</p><div class="mu" id="pvs"></div><div class="pvf" id="pvf"></div></div>`}
 const PV={n:0,url:''};
-const pdfBlob=()=>{const d=document.createElement('div');d.innerHTML=sheet();const el=d.firstElementChild;el.classList.add('x');
- return html2pdf().set({margin:[8,0,8,0],image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:794},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['.xr','.sht','.al','.ib']}}).from(el).outputPdf('blob')};
+let LOGO=null;
+fetch('logo.png').then(r=>{if(!r.ok||!(r.headers.get('content-type')||'').startsWith('image'))throw 0;return r.blob()}).then(b=>{const f=new FileReader();f.onload=()=>{const i=new Image();i.onload=()=>{LOGO={u:f.result,w:i.width,h:i.height}};i.src=f.result};f.readAsDataURL(b)}).catch(()=>{});
+const imgDims=u=>new Promise(r=>{const i=new Image();i.onload=()=>r({w:i.width||1,h:i.height||1});i.onerror=()=>r({w:1,h:1});i.src=u});
+const fmtI=u=>u.includes('image/png')?'PNG':'JPEG';
+async function makePDF(){
+ const {jsPDF}=window.jspdf,s=st(),d=D(),full=S.model=='completo',doc=new jsPDF(),W=doc.internal.pageSize.width,H=doc.internal.pageSize.height,G=[31,122,77],GD=[201,162,39],L=[232,243,236];let y=36;
+ const dims={};await Promise.all([...new Set(d.days.flatMap(x=>x.ex.flatMap(e=>imgsOf(e).slice(0,2))))].map(async u=>dims[u]=await imgDims(u)));
+ if(LOGO){const h=11,w=Math.min(70,h*LOGO.w/LOGO.h);doc.addImage(LOGO.u,fmtI(LOGO.u),14,9,w,h)}
+ else{doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...G);doc.text('MIB',14,20);doc.setTextColor(...GD);doc.text('Fit',14+doc.getTextWidth('MIB '),20)}
+ doc.setTextColor(...G);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('Plano de Treino',W-14,19,{align:'right'});
+ doc.setDrawColor(...GD);doc.setLineWidth(1);doc.line(14,26,W-14,26);
+ const bar=(a,b,h)=>{doc.setFillColor(...L);doc.roundedRect(14,y-5,W-28,h,2,2,'F');doc.setTextColor(40);doc.setFontSize(11);
+  doc.setFont('helvetica','bold');doc.text(a[0],18,y+4);const lw=doc.getTextWidth(a[0]);doc.setFont('helvetica','normal');doc.text(a[1],18+lw,y+4);
+  if(b){doc.setFont('helvetica','bold');const t=b[0],w2=doc.getTextWidth(t);doc.setFont('helvetica','normal');const v=b[1],vw=doc.getTextWidth(v);doc.setFont('helvetica','bold');doc.text(t,W-18-vw-w2,y+4);doc.setFont('helvetica','normal');doc.text(v,W-18,y+4,{align:'right'})}y+=h+5};
+ bar(['Aluno: ',s?s.name:'-'],['Data: ',new Date().toLocaleDateString('pt-BR')],14);
+ if(s&&(s.goal||s.freq))bar(['Objetivo: ',s.goal||'-'],['Frequência: ',s.freq?s.freq+'x por semana':'-'],11);
+ y+=2;doc.setTextColor(...G);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(d.name||'Treino',14,y+3);y+=10;
+ const box=(t,x)=>{doc.setFontSize(10);doc.setFont('helvetica','normal');const ls=doc.splitTextToSize(x,W-40),h=ls.length*4.6+12;if(y+h>H-20){doc.addPage();y=16}
+  doc.setFillColor(255,249,225);doc.rect(14,y,W-28,h,'F');doc.setFillColor(...GD);doc.rect(14,y,1.8,h,'F');
+  doc.setFont('helvetica','bold');doc.setTextColor(...G);doc.text(t,20,y+6);doc.setFont('helvetica','normal');doc.setTextColor(60);doc.text(ls,20,y+12);y+=h+6};
+ if(s&&(s.pains||[]).length)box('Atenção',"Dores localizadas: "+s.pains.join(', ')+'. Em caso de desconforto, interrompa o exercício e avise o professor.');
+ if(d.obs&&d.obs.trim())box('Orientações gerais',d.obs.trim());
+ d.days.forEach(sess=>{
+  if(y>H-70){doc.addPage();y=16}
+  const rows=sess.ex.map(e=>{const ln=[];const add=(t,o)=>doc.splitTextToSize(t,84).forEach(x=>ln.push({t:x,...o}));
+   doc.setFont('helvetica','bold');doc.setFontSize(10.5);add(e.n||'Exercício',{b:1,s:10.5,c:[40,40,40]});
+   doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+   add((e.g||'')+(full&&e.m?' · '+e.m:''),{s:8.5,c:G});add('Regulagem: '+(e.reg&&e.reg.trim()?e.reg.trim():'Sem regulagem'),{s:8.5,c:[90,90,90]});
+   if(full&&e.o&&e.o.trim())add('Obs.: '+e.o.trim(),{i:1,s:8.5,c:[90,90,90]});
+   if(full&&ok(e.yt))ln.push({t:'Vídeo de execução',u:e.yt.trim(),s:8.5,c:G});
+   return {ln,im:imgsOf(e).slice(0,2),e,h:Math.max(26,8+ln.reduce((a,l)=>a+(l.s>10?5:4.2),0))}});
+  doc.autoTable({startY:y,theme:'plain',rowPageBreak:'avoid',margin:{top:16,left:14,right:14,bottom:20},
+   head:[[{content:sess.n,colSpan:2,styles:{halign:'left'}},'Séries × Reps','Descanso']],
+   body:rows.length?rows.map(r=>[{content:'',styles:{minCellHeight:r.h}},'',{content:r.e.s+' × '+r.e.r,styles:{halign:'center',fontStyle:'bold',fontSize:12.5,textColor:G}},{content:r.e.d+' s',styles:{halign:'center',fontStyle:'bold',fontSize:11,textColor:[122,100,16]}}]):[[{content:'Sem exercícios nesta sessão',colSpan:4,styles:{fontStyle:'italic',textColor:150}}]],
+   headStyles:{fillColor:G,textColor:255,fontSize:12,fontStyle:'bold',halign:'center',cellPadding:{top:3,bottom:3,left:4,right:4}},
+   bodyStyles:{fontSize:10,textColor:50,valign:'middle',lineColor:[225,225,225],lineWidth:{bottom:0.2}},
+   alternateRowStyles:{fillColor:[246,251,248]},columnStyles:{0:{cellWidth:36},2:{cellWidth:30},3:{cellWidth:26}},
+   didDrawCell:c=>{if(c.section!=='body'||!rows.length)return;const r=rows[c.row.index];if(!r)return;const x=c.cell.x,yy=c.cell.y,h=c.cell.height;
+    if(c.column.index===0&&r.im.length){const bw=r.im.length==1?32:15,bh=h-4;r.im.forEach((u,k)=>{const D=dims[u],sc=Math.min(bw/D.w,bh/D.h),w=D.w*sc,hh=D.h*sc;try{doc.addImage(u,fmtI(u),x+2+k*(bw+2)+(bw-w)/2,yy+(h-hh)/2,w,hh)}catch(e){}})}
+    if(c.column.index===1){let ty=yy+(h-(r.h-8))/2+3.4;r.ln.forEach(l=>{doc.setFont('helvetica',l.b?'bold':l.i?'italic':'normal');doc.setFontSize(l.s);doc.setTextColor(...l.c);if(l.u)doc.textWithLink(l.t,x+3,ty,{url:l.u});else doc.text(l.t,x+3,ty);ty+=l.s>10?5:4.2})}}});
+  y=doc.lastAutoTable.finalY+8});
+ const n=doc.getNumberOfPages();
+ for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(...GD);doc.setLineWidth(.6);doc.line(14,H-13,W-14,H-13);doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(120);doc.text('MIB Fit',14,H-8);doc.text('Página '+i+' de '+n,W-14,H-8,{align:'right'})}
+ return doc}
 async function pdfUp(){const n=++PV.n;if(!$('pvf'))return;
- if(!window.html2pdf){$('pvf').innerHTML='<div class="pvw"><div id="pvz">'+sheet()+'</div></div>';fit();$('pvs').textContent='Gerador de PDF indisponível. Use Imprimir (Ctrl+P) e salve como PDF.';return}
+ if(!window.jspdf){$('pvf').innerHTML='<div class="pvw"><div id="pvz">'+sheet()+'</div></div>';fit();$('pvs').textContent='Gerador de PDF indisponível. Use Imprimir (Ctrl+P) e salve como PDF.';return}
  $('pvs').textContent='Gerando PDF…';
- try{const url=URL.createObjectURL(await pdfBlob()),b=$('pvf');if(!b||n!=PV.n){URL.revokeObjectURL(url);return}
+ try{const url=(await makePDF()).output('bloburl'),b=$('pvf');if(!b||n!=PV.n){URL.revokeObjectURL(url);return}
   if(PV.url)URL.revokeObjectURL(PV.url);PV.url=url;b.innerHTML='<iframe title="Prévia do PDF" src="'+url+'"></iframe>';$('pvs').textContent=''}
  catch(e){if($('pvs'))$('pvs').textContent='Não foi possível gerar o PDF: '+e.message}}
-async function pdfDl(){if(!window.html2pdf)return print();if(!PV.url)await pdfUp();if(!PV.url)return;const a=document.createElement('a');a.href=PV.url;a.download='MIBFit_'+norm((st()||{}).name||'treino').replace(/[^a-z0-9]+/g,'_')+'.pdf';a.click()}
-function pdfOpen(){if(PV.url)open(PV.url,'_blank');else if(!window.html2pdf)print()}
+async function pdfDl(){if(!window.jspdf)return print();if(!PV.url)await pdfUp();if(!PV.url)return;const a=document.createElement('a');a.href=PV.url;a.download='MIBFit_'+norm((st()||{}).name||'treino').replace(/[^a-z0-9]+/g,'_')+'.pdf';a.click()}
+function pdfOpen(){if(PV.url)open(PV.url,'_blank');else if(!window.jspdf)print()}
 /* SALVOS */
 function savePlan(){const d=D();if(!d.days.length){alert('Adicione ao menos uma sessão.');return}if(!st()){alert('Selecione um aluno.');return}
  const c=JSON.parse(JSON.stringify(d));c.name=c.name||'Treino '+today();
