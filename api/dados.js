@@ -1,5 +1,25 @@
-// Leitura (GET ?t=alunos|exercicios) e gravação (POST) dos alunos e exercícios. Exige login do professor.
-const { db, ensure, check } = require('../lib/server');
+// Professor: leitura (GET ?t=...) e gravação (POST) de alunos, exercícios, professores, treinos, check-ins e agenda.
+const { db, ensure, check, pickCode, upAgenda, tx } = require('../lib/server');
+
+// colunas "de busca" de cada tabela; o objeto completo fica sempre em "dados" (jsonb)
+const C = {
+  alunos: { cols: ['nome'], f: (x) => [x.name || ''] },
+  exercicios: { cols: ['nome', 'grupo'], f: (x) => [x.n || '', x.g || ''] },
+  professores: { cols: ['nome'], f: (x) => [x.name || ''] },
+  treinos: { cols: ['aluno_id', 'nome'], f: (x) => [x.sid || '', x.name || ''] },
+  checkins: { cols: ['aluno_id', 'data'], f: (x) => [x.sid || '', x.date || ''] },
+  agenda: {},
+};
+
+async function upsert(c, t, k, x) {
+  const n = k.cols.length;
+  const ph = k.cols.map((_, i) => '$' + (i + 2)).join(',');
+  const set = k.cols.map((col, i) => `${col}=$${i + 2}`).join(',');
+  await c.query(
+    `insert into ${t} (id, ${k.cols.join(',')}, dados) values ($1, ${ph}, $${n + 2})
+     on conflict (id) do update set ${set}, dados=$${n + 2}, atualizado_em=now()`,
+    [x.id, ...k.f(x), x]);
+}
 
 module.exports = async (req, res) => {
   try {
@@ -9,47 +29,46 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       const t = req.query.t;
-      if (t === 'alunos') {
-        const r = await q.query('select dados from alunos order by nome');
-        return res.json({ alunos: r.rows.map((x) => x.dados) });
-      }
-      if (t === 'exercicios') {
-        const r = await q.query('select dados from exercicios order by nome');
-        return res.json({ exercicios: r.rows.map((x) => x.dados) });
-      }
-      return res.status(400).json({ erro: 'Parâmetro t inválido.' });
+      if (!C[t]) return res.status(400).json({ erro: 'Parâmetro t inválido.' });
+      const r = await q.query(`select dados from ${t} order by atualizado_em`);
+      return res.json({ [t]: r.rows.map((x) => x.dados) });
     }
 
     if (req.method === 'POST') {
-      const b = req.body || {};
-      const al = b.alunos || {}, ex = b.exercicios || {};
-      const c = await q.connect();
-      try {
-        await c.query('begin');
-        for (const x of al.up || [])
-          await c.query(
-            `insert into alunos (id, nome, cpf, dados) values ($1,$2,$3,$4)
-             on conflict (id) do update set nome=$2, cpf=$3, dados=$4, atualizado_em=now()`,
-            [x.id, x.name || '', x.cpf || '', x]);
-        for (const x of ex.up || [])
-          await c.query(
-            `insert into exercicios (id, nome, grupo, dados) values ($1,$2,$3,$4)
-             on conflict (id) do update set nome=$2, grupo=$3, dados=$4, atualizado_em=now()`,
-            [x.id, x.n || '', x.g || '', x]);
-        if ((al.del || []).length) await c.query('delete from alunos where id = any($1)', [al.del]);
-        if ((ex.del || []).length) await c.query('delete from exercicios where id = any($1)', [ex.del]);
-        await c.query('commit');
-      } catch (err) {
-        await c.query('rollback');
-        throw err;
-      } finally {
-        c.release();
-      }
-      return res.json({ ok: true });
+      const body = req.body || {};
+      const codes = {};
+      await tx(q, async (c) => {
+        for (const t of Object.keys(C)) {
+          const b = body[t] || {};
+          for (const x of b.up || []) {
+            if (!x || typeof x.id !== 'string' || !x.id) continue;
+            if (t === 'agenda') { await upAgenda(c, x); continue; }
+            if (t === 'alunos') {
+              // o código do aluno é fixo: se já existe, nunca muda (nem pelo professor)
+              const ex = (await c.query('select codigo from alunos where id=$1', [x.id])).rows[0];
+              const code = ex && ex.codigo ? ex.codigo : await pickCode(c, x.id, x.codigo);
+              codes[x.id] = code;
+              await c.query(
+                `insert into alunos (id, nome, codigo, dados) values ($1::text, $2::text, $3::text, $4::jsonb)
+                 on conflict (id) do update set nome=$2::text, codigo=coalesce(alunos.codigo, $3::text),
+                   dados=$4::jsonb || jsonb_build_object('codigo', coalesce(alunos.codigo, $3::text)), atualizado_em=now()`,
+                [x.id, x.name || '', code, x]);
+              continue;
+            }
+            await upsert(c, t, C[t], x);
+          }
+          const del = (b.del || []).filter((i) => typeof i === 'string');
+          if (del.length) {
+            if (t === 'alunos') for (const d of ['treinos', 'checkins', 'agenda']) await c.query(`delete from ${d} where aluno_id = any($1)`, [del]);
+            await c.query(`delete from ${t} where id = any($1)`, [del]);
+          }
+        }
+      });
+      return res.json({ ok: true, codes });
     }
 
     res.status(405).end();
   } catch (e) {
-    res.status(500).json({ erro: e.message });
+    res.status(e.status || 500).json({ erro: e.message });
   }
 };
