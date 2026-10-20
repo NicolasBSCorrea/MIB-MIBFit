@@ -46,6 +46,7 @@ details{border-bottom:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;f
 .xb{flex:1;min-width:0}.xn{font-weight:700;font-size:15px}.tg{display:inline-block;background:var(--ac2);color:var(--gr);border-radius:20px;padding:1px 9px;font-size:11px;margin:3px 4px 0 0}.tg.g2{background:var(--gd2);color:#7a6410}.xo{font-size:12.5px;color:var(--mu);margin-top:4px}
 .xs{display:flex;gap:6px;flex:none}.pl{text-align:center;background:var(--ac2);border-radius:10px;padding:6px 10px;min-width:72px}.pl b{display:block;font-size:17px;color:var(--gr)}.pl span{font-size:10px;color:var(--mu);text-transform:uppercase}.pl.l{background:var(--gd2)}.pl.l b{color:#7a6410}
 .ob{margin-top:16px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:14px;white-space:pre-wrap}.ft{margin-top:22px;padding:12px 26px;background:var(--bg);border-top:2px solid var(--gd);font-size:12px;color:var(--mu);text-align:center}
+.cdg{font-size:24px;font-weight:800;letter-spacing:4px;color:var(--ac);line-height:1.6}
 .sres{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--bd);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);max-height:300px;overflow:auto}.sres:empty{display:none}
 .pvw{background:#d9d6cb;padding:16px;border-radius:12px;overflow-x:auto}.sheet.x{min-height:0!important;margin:0!important;box-shadow:none!important;border-radius:0!important}
 .sr{display:grid;grid-template-columns:70px 1fr 1fr;gap:8px;align-items:end;margin-top:8px}
@@ -63,7 +64,7 @@ th,td{padding:8px 6px}td input,td select{min-width:104px}.big{font-size:24px}
 .sht{background:var(--ac);border-left:0;border-radius:4px 4px 0 0}.xr:nth-child(odd){background:#f7faf8}
 .pvf{margin-top:10px}.pvf iframe{width:100%;height:78vh;min-height:520px;border:0;border-radius:8px;background:#525659}
 @page{size:A4;margin:8mm 0}</style></head><body>
-<div class="app"><aside id="nav"></aside><div class="mn"><header><div class="lg"><img src="logo.png" alt="" onerror="this.style.display='none'">MIB <span>Fit</span></div><span id="cs" class="mu"></span><div id="hb" style="flex:0 1 320px;position:relative"><input id="hq" placeholder="🔍 Buscar aluno por nome ou CPF" autocomplete="off" oninput="sq(this.value,'hr')" onfocus="this.select()"><div class="sres" id="hr"></div></div></header><main id="m"></main></div></div>
+<div class="app"><aside id="nav"></aside><div class="mn"><header><div class="lg"><img src="logo.png" alt="" onerror="this.style.display='none'">MIB <span>Fit</span></div><span id="cs" class="mu"></span><div id="hb" style="flex:0 1 320px;position:relative"><input id="hq" placeholder="🔍 Buscar aluno por nome ou código" autocomplete="off" oninput="sq(this.value,'hr')" onfocus="this.select()"><div class="sres" id="hr"></div></div></header><main id="m"></main></div></div>
 <script>
 const G=['Peito','Costas','Ombros','Bíceps','Tríceps','Quadríceps','Posterior','Glúteos','Abdômen','Panturrilha'];
 const PN=['Cervical','Ombro','Cotovelo','Punho/mão','Coluna torácica','Lombar','Quadril','Joelho','Tornozelo/pé'];
@@ -73,30 +74,37 @@ const T=[['aluno','Alunos'],['avaliacao','Avaliação física'],['treino','Trein
 let S;try{S=JSON.parse(localStorage.getItem('mibfit')||'null')}catch(e){}
 S=S||{students:[],plans:[],lib:[],sid:'',tab:'aluno',model:'simples',q:'',d:{pid:'',name:'',obs:'',days:[]}};
 S.checkins=S.checkins||[];S.ci=S.ci||{};S.sq=S.sq||'';S.ag=S.ag||[];S.profs=S.profs||[];let A={};try{A=JSON.parse(sessionStorage.getItem('mibA')||'{}')}catch(e){}
-const saveLocal=()=>{try{localStorage.setItem('mibfit',JSON.stringify(S))}catch(e){alert('Armazenamento cheio: use imagens menores.')}};
+const saveLocal=()=>{try{if(A.role=='aluno')localStorage.setItem('mibci',JSON.stringify(S.ci));else localStorage.setItem('mibfit',JSON.stringify(S))}catch(e){if(!S.cl2)alert('Armazenamento cheio: use imagens menores.')}};
 const save=()=>{saveLocal();if(cloud.on&&A.role=='prof')sched()};
-/* NUVEM: alunos e exercícios no banco de dados */
-const cloud={on:false,snap:{a:{},e:{}}};let tm;
+if(A.role=='aluno'){S.students=[];S.plans=[];S.checkins=[];S.ag=[];S.profs=[];S.lib=[];try{S.ci=JSON.parse(localStorage.getItem('mibci')||'{}')}catch(e){S.ci={}}}
+/* NUVEM: tudo (alunos, exercícios, professores, treinos, check-ins e agenda) fica no banco de dados */
+const cloud={on:false,snap:{}};let tm,loadA=false;
+const COLS=[['a','alunos','students'],['e','exercicios','lib'],['f','professores','profs'],['t','treinos','plans'],['c','checkins','checkins'],['g','agenda','ag']];
 const cst=t=>{const e=document.getElementById('cs');if(e)e.textContent=t};
 async function api(p,o={}){const r=await fetch('/api/'+p,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+(sessionStorage.getItem('mibT')||'')}});let j={};try{j=await r.json()}catch(e){}
  if(r.status==401&&p!='login'){setA({});alert('Sessão expirada. Entre novamente.');throw new Error('Sessão expirada')}
  if(!r.ok)throw new Error(j.erro||'Erro '+r.status);return j}
-const snapOf=()=>{const o={a:{},e:{}};S.students.forEach(x=>o.a[x.id]=JSON.stringify(x));S.lib.forEach(x=>o.e[x.id]=JSON.stringify(x));return o};
+const snapOf=()=>{const o={};COLS.forEach(([k,,sk])=>{o[k]={};S[sk].forEach(x=>o[k][x.id]=JSON.stringify(x))});return o};
+function newCode(){const used=new Set(S.students.map(a=>a.codigo));for(let i=0;i<500;i++){const c=String(10000+crypto.getRandomValues(new Uint32Array(1))[0]%90000);if(!used.has(c)&&!/^(\d)\1{4}$/.test(c)&&!'01234567890'.includes(c)&&!'98765432109'.includes(c))return c}return String(10000+Math.floor(Math.random()*90000))}
+function ensureCodes(){S.students.forEach(a=>{delete a.cpf;if(!/^\d{5}$/.test(a.codigo||''))a.codigo=newCode()})}
 const sched=()=>{clearTimeout(tm);cst('☁ salvando…');tm=setTimeout(push,800)};
 async function pull(){cst('☁ sincronizando…');
- try{const [a,e]=await Promise.all([api('dados?t=alunos'),api('dados?t=exercicios')]),first=!S.cl,sn={a:{},e:{}};
-  a.alunos.forEach(x=>sn.a[x.id]=JSON.stringify(x));e.exercicios.forEach(x=>sn.e[x.id]=JSON.stringify(x));
-  const mg=(sv,lc)=>{const m=new Set(sv.map(x=>x.id));return sv.concat(lc.filter(x=>!m.has(x.id)))};
-  S.students=first?mg(a.alunos,S.students):a.alunos;S.lib=first?mg(e.exercicios,S.lib):e.exercicios;
-  if(!S.students.some(x=>x.id==S.sid))S.sid='';
-  S.cl=1;cloud.snap=sn;cloud.on=true;saveLocal();R();await push()}
- catch(x){cst('⚠ sem conexão com a nuvem: '+x.message)}}
-async function push(){const cur=snapOf(),B=[],nb=()=>({alunos:{up:[],del:[]},exercicios:{up:[],del:[]}});let b=nb(),z=0;
- const add=(k,x)=>{const n=JSON.stringify(x).length;if(z+n>3e6){B.push(b);b=nb();z=0}b[k].up.push(x);z+=n};
- const map={a:['alunos',S.students],e:['exercicios',S.lib]};
- for(const k in map){const [nm,L]=map[k];L.forEach(x=>{if(cloud.snap[k][x.id]!==cur[k][x.id])add(nm,x)});for(const id in cloud.snap[k])if(!(id in cur[k]))b[nm].del.push(id)}
- B.push(b);if(!B.some(x=>x.alunos.up.length||x.alunos.del.length||x.exercicios.up.length||x.exercicios.del.length)){cst('☁ sincronizado');return}
- try{for(const x of B)await api('dados',{method:'POST',body:JSON.stringify(x)});cloud.snap=cur;cst('☁ salvo na nuvem')}catch(e){cst('⚠ não salvou: '+e.message)}}
+ try{const rs=await Promise.all(COLS.map(([,n])=>api('dados?t='+n))),first=!S.cl2,sn={};
+  COLS.forEach(([k,n,sk],i)=>{const sv=rs[i][n]||[];sn[k]={};sv.forEach(x=>sn[k][x.id]=JSON.stringify(x));const m=new Set(sv.map(x=>x.id));S[sk]=first?sv.concat(S[sk].filter(x=>!m.has(x.id))):sv});
+  ensureCodes();if(!S.students.some(x=>x.id==S.sid))S.sid='';
+  S.cl2=1;cloud.snap=sn;cloud.on=true;saveLocal();R();await push()}
+ catch(x){cloud.on=false;cst('⚠ sem conexão com o banco: '+x.message);if(x.message!='Sessão expirada')alert('Não foi possível carregar os dados do banco: '+x.message+'\n\nAs alterações NÃO serão salvas na nuvem até isso ser resolvido.')}}
+async function push(){const cur=snapOf(),B=[],nb=()=>{const o={};COLS.forEach(([,n])=>o[n]={up:[],del:[]});return o};let b=nb(),z=0,any=false,ch=false;
+ const add=(n,x)=>{const m=JSON.stringify(x).length;if(z+m>3e6){B.push(b);b=nb();z=0}b[n].up.push(x);z+=m;any=true};
+ COLS.forEach(([k,n,sk])=>{S[sk].forEach(x=>{if(cloud.snap[k][x.id]!==cur[k][x.id])add(n,x)});for(const id in cloud.snap[k])if(!(id in cur[k])){b[n].del.push(id);any=true}});
+ if(!any){cst('☁ sincronizado · '+S.students.length+' alunos · '+S.lib.length+' exercícios · '+S.plans.length+' treinos');return true}
+ B.push(b);
+ try{for(const x of B){const r=await api('dados',{method:'POST',body:JSON.stringify(x)});for(const id in (r.codes||{})){const a=S.students.find(q=>q.id==id);if(a&&a.codigo!==r.codes[id]){a.codigo=r.codes[id];cur.a[id]=JSON.stringify(a);ch=true}}}
+  cloud.snap=cur;if(ch){saveLocal();R()}cst('☁ salvo na nuvem');return true}
+ catch(e){cst('⚠ não salvou: '+e.message);return false}}
+async function pullAluno(){const r=await api('aluno');S.students=[r.aluno];S.plans=r.plans;S.checkins=r.checkins;S.ag=r.ag;S.profs=r.profs;S.lib=[];S.sid=r.aluno.id}
+async function refresh(){try{if(A.role=='aluno'){await pullAluno();R()}else{clearTimeout(tm);if(!(await push())&&!confirm('Há alterações que não foram salvas. Descartá-las e recarregar do banco?'))return;await pull()}}catch(e){alert(e.message)}}
+const auto=t=>{if(['hist','ag'].includes(t))refresh()};
 const uid=()=>Math.random().toString(36).slice(2,9),$=id=>document.getElementById(id),v=id=>$(id).value;
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const st=()=>S.students.find(s=>s.id===S.sid),D=()=>S.d,allEx=()=>D().days.flatMap(d=>d.ex.map(e=>({...e,day:d.n})));
@@ -104,30 +112,30 @@ const today=()=>new Date().toLocaleDateString('en-CA'),fd=d=>String(d).split('-'
 function setA(a){A=a;if(a.role)sessionStorage.setItem('mibA',JSON.stringify(a));else{sessionStorage.removeItem('mibA');sessionStorage.removeItem('mibT');cloud.on=false}R()}
 const h256=async t=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(),dg=s=>String(s||'').replace(/\D/g,'');
-function vLogin(){const f=!S.pw;return `<div class="row" style="max-width:780px;margin:30px auto"><div class="card"><h3>Professor</h3><label>Senha do professor</label><input id="lp" type="password" onkeydown="if(event.key=='Enter')plogin()"><div class="mt"><button class="btn" onclick="plogin()">Entrar</button></div></div><div class="card"><h3>Aluno</h3><label>CPF ou nome completo</label><input id="la" placeholder="Digite seu CPF ou nome completo" onkeydown="if(event.key=='Enter')alogin()"><div class="mt"><button class="btn o" onclick="alogin()">Entrar</button></div><p class="mu" id="le"></p></div></div>`}
+function vLogin(){const f=!S.pw;return `<div class="row" style="max-width:780px;margin:30px auto"><div class="card"><h3>Professor</h3><label>Senha do professor</label><input id="lp" type="password" onkeydown="if(event.key=='Enter')plogin()"><div class="mt"><button class="btn" onclick="plogin()">Entrar</button></div></div><div class="card"><h3>Aluno</h3><label>Código do aluno</label><input id="la" inputmode="numeric" maxlength="5" placeholder="Digite seu código de 5 dígitos" onkeydown="if(event.key=='Enter')alogin()"><div class="mt"><button class="btn o" onclick="alogin()">Entrar</button></div><p class="mu" id="le"></p></div></div>`}
 async function plogin(){const p=v('lp');if(!p)return;try{const r=await api('login',{method:'POST',body:JSON.stringify({senha:p})});sessionStorage.setItem('mibT',r.token);S.tab='aluno';setA({role:'prof'});pull()}catch(e){alert(e.message)}}
-function alogin(){const q=v('la').trim(),d=dg(q),m=S.students.filter(a=>d.length>=11?dg(a.cpf)==d:norm(a.name)==norm(q));
- if(!q||!m.length)return $('le').textContent='Aluno não encontrado. Confira o CPF ou o nome completo.';
- if(m.length>1)return $('le').textContent='Há mais de um aluno com esse nome. Entre com o CPF.';
- S.tab='meu';setA({role:'aluno',sid:m[0].id})}
-function R(){if(A.role=='aluno'&&!S.students.some(x=>x.id==A.sid))A={};
+async function alogin(){const q=dg(v('la'));if(q.length!==5)return $('le').textContent='Digite os 5 dígitos do seu código.';
+ try{const r=await api('aluno-login',{method:'POST',body:JSON.stringify({codigo:q})}),d=r.data;sessionStorage.setItem('mibT',r.token);
+  S.students=[d.aluno];S.plans=d.plans;S.checkins=d.checkins;S.ag=d.ag;S.profs=d.profs;S.lib=[];S.sid=d.aluno.id;S.ci={};try{S.ci=JSON.parse(localStorage.getItem('mibci')||'{}')}catch(e){}
+  S.tab='meu';setA({role:'aluno',sid:d.aluno.id})}catch(e){$('le').textContent=e.message}}
+function R(){if(A.role=='aluno'&&loadA){$('nav').innerHTML='';$('m').innerHTML='<div class="card">Carregando seu treino…</div>';return}
+ if(A.role=='aluno'&&!S.students.some(x=>x.id==A.sid)){A={};sessionStorage.removeItem('mibA');sessionStorage.removeItem('mibT')}
  const al=A.role=='aluno',tb=al?TA:T,sp=$('hb');
  if(!A.role){$('nav').innerHTML='';sp.style.display='none';$('m').innerHTML=vLogin();return}
  if(al)S.sid=A.sid;if(!tb.some(t=>t[0]==S.tab))S.tab=tb[0][0];
- $('nav').innerHTML=tb.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="S.tab='${t[0]}';save();R();scrollTo(0,0)">${t[1]}</button>`).join('')+'<button onclick="setA({})" style="margin-top:12px;color:#f3d77a">⎋ Sair</button>';
+ $('nav').innerHTML=tb.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="S.tab='${t[0]}';save();R();scrollTo(0,0);auto('${t[0]}')">${t[1]}</button>`).join('')+'<button onclick="refresh()" style="margin-top:12px;color:#f3d77a">↻ Atualizar</button><button onclick="setA({})" style="color:#f3d77a">⎋ Sair</button>';
  sp.style.display=al?'none':'';
  $('hq').value=st()?st().name:'';
  const t=S.tab;$('m').innerHTML=!st()&&['avaliacao','hist'].includes(t)?'<div class="card">Cadastre e selecione um aluno na aba <b>Alunos</b>.</div>':({aluno:vAluno,avaliacao:vAval,treino:vTreino,lib:vLib,volume:vVol,metodo:vMetodo,previa:vPrev,salvos:vSalvos,meu:vMeu,hist:vHist,ag:vAg,prof:vProf})[t](st());if(t=='ag')busy();if(t=='previa')pdfUp()}
 /* ALUNOS */
-const stRows=()=>{const q=norm(S.sq),d=dg(S.sq);return S.students.filter(a=>!q||norm(a.name).includes(q)||(d&&dg(a.cpf).includes(d))).map(a=>`<tr style="cursor:pointer" onclick="S.sid='${a.id}';save();R()"><td><b>${esc(a.name)}</b></td><td>${esc(a.cpf)}</td><td>${esc(a.goal)}</td><td>${esc((a.pains||[]).join(', '))}</td></tr>`).join('')||'<tr><td colspan="4" class="mu">Nenhum aluno encontrado.</td></tr>'};
-function vAluno(){const s=st()||{},age=s.birth?Math.floor((Date.now()-new Date(s.birth))/31557600000):'',pn=s.pains||[];return `${searchCard()}<div class="card"><h3>${s.id?'Aluno: '+esc(s.name):'Novo aluno'}</h3><div class="row"><div style="flex:2 1 220px"><label>Nome completo</label><input id="an" value="${esc(s.name)}"></div><div><label>CPF (login do aluno)</label><input id="acpf" inputmode="numeric" value="${esc(s.cpf)}"></div><div><label>Nascimento ${age!==''?'('+age+' anos)':''}</label><input id="ab" type="date" value="${esc(s.birth)}"></div><div><label>Sexo biológico</label><select id="as"><option ${s.sex=='Feminino'?'selected':''}>Feminino</option><option ${s.sex=='Masculino'?'selected':''}>Masculino</option></select></div></div>
+function vAluno(){const s=st()||{},age=s.birth?Math.floor((Date.now()-new Date(s.birth))/31557600000):'',pn=s.pains||[];return `${searchCard()}<div class="card"><h3>${s.id?'Aluno: '+esc(s.name):'Novo aluno'}</h3><div class="row"><div style="flex:2 1 220px"><label>Nome completo</label><input id="an" value="${esc(s.name)}"></div><div><label>Código de acesso do aluno (fixo)</label>${s.id?`<div class="cdg">${esc(s.codigo)}</div>`:'<div class="mu">Será gerado ao cadastrar</div>'}</div><div><label>Nascimento ${age!==''?'('+age+' anos)':''}</label><input id="ab" type="date" value="${esc(s.birth)}"></div><div><label>Sexo biológico</label><select id="as"><option ${s.sex=='Feminino'?'selected':''}>Feminino</option><option ${s.sex=='Masculino'?'selected':''}>Masculino</option></select></div></div>
 <div class="row mt"><div><label>Telefone</label><input id="at" value="${esc(s.tel)}"></div><div><label>Objetivo</label><input id="ao" value="${esc(s.goal)}"></div><div><label>Frequência semanal</label><input id="af" type="number" value="${esc(s.freq)}"></div></div>
 <div class="bar mt"><button class="btn" onclick="saveAluno(${!!s.id})">${s.id?'Salvar alterações':'Cadastrar aluno'}</button>${s.id?`<button class="btn g" onclick="S.sid='';save();R()">Novo aluno</button><button class="btn d" onclick="delAluno()">Excluir</button>`:''}</div></div>
 <div class="card"><h3>Backup dos dados</h3><p class="mu">Enquanto não há banco de dados, tudo fica salvo neste navegador. Exporte para levar os dados a outro aparelho.</p><div class="bar"><button class="btn g" onclick="expD()">⬇ Exportar</button><button class="btn g" onclick="impD()">⬆ Importar</button></div></div>`}
 function expD(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mibfit-backup.json';a.click()}
-function impD(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.students)throw 0;S=d;S.checkins=S.checkins||[];S.ci=S.ci||{};S.ag=S.ag||[];S.profs=S.profs||[];S.sq='';S.cl=0;cloud.on=false;saveLocal();R();if(A.role=='prof')pull()}catch(e){alert('Arquivo inválido.')}};i.click()}
-function saveAluno(ed){const n=v('an').trim();if(!n)return;const d={name:n,cpf:v('acpf').trim(),birth:v('ab'),sex:v('as'),tel:v('at'),goal:v('ao'),freq:v('af')};
- if(ed)Object.assign(st(),d);else{const a={id:uid(),ev:[],...d};S.students.push(a);S.sid=a.id}save();R()}
+function impD(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.students)throw 0;S=d;S.checkins=S.checkins||[];S.ci=S.ci||{};S.ag=S.ag||[];S.profs=S.profs||[];S.sq='';S.cl2=0;cloud.on=false;saveLocal();R();if(A.role=='prof')pull()}catch(e){alert('Arquivo inválido.')}};i.click()}
+function saveAluno(ed){const n=v('an').trim();if(!n)return;const d={name:n,birth:v('ab'),sex:v('as'),tel:v('at'),goal:v('ao'),freq:v('af')};
+ let nc='';if(ed)Object.assign(st(),d);else{const a={id:uid(),ev:[],codigo:newCode(),...d};S.students.push(a);S.sid=a.id;nc=a.codigo}save();R();if(nc)alert('Aluno cadastrado!\n\nCódigo de acesso: '+nc+'\n\nEsse código é fixo e não pode ser alterado.')}
 function delAluno(){if(confirm('Excluir este aluno e seus dados?')){S.students=S.students.filter(a=>a.id!=S.sid);S.plans=S.plans.filter(p=>p.sid!=S.sid);S.checkins=S.checkins.filter(c=>c.sid!=S.sid);S.ag=S.ag.filter(b=>b.sid!=S.sid);S.sid='';save();R()}}
 /* AVALIAÇÃO */
 const AF=[['peso','Peso (kg)'],['alt','Altura (cm)'],['gord','% Gordura'],['peito','Peito (cm)'],['cint','Cintura (cm)'],['quad','Quadril (cm)'],['braco','Braço (cm)'],['coxa','Coxa (cm)']];
@@ -156,10 +164,10 @@ function addEx(i){day(i).ex.push({id:uid(),n:'',g:G[0],s:'3',r:'10',d:'60',m:MET
 function delEx(a,b){const y=day(a);y.ex=y.ex.filter(e=>e.id!=b);save();R()}
 function up(a,b,k,x){const e=ex(a,b);e[k]=x;if(k=='n'||k=='g'||k=='sv'||k=='yt')syncLib(e);save();if(k=='g')R()}
 const ok=u=>/^https?:\/\//i.test(String(u||'').trim());
-const searchCard=()=>`<div class="card"><h3>Buscar aluno</h3><div style="position:relative"><input id="sq1" placeholder="Digite o nome completo ou o CPF do aluno" autocomplete="off" oninput="sq(this.value,'sr1')"><div class="sres" id="sr1"></div></div><p class="mu">${S.students.length} cadastrado${S.students.length==1?'':'s'}. ${st()?'Selecionado: <b>'+esc(st().name)+'</b>':''}</p></div>`;
+const searchCard=()=>`<div class="card"><h3>Buscar aluno</h3><div style="position:relative"><input id="sq1" placeholder="Digite o nome ou o código do aluno" autocomplete="off" oninput="sq(this.value,'sr1')"><div class="sres" id="sr1"></div></div><p class="mu">${S.students.length} cadastrado${S.students.length==1?'':'s'}. ${st()?'Selecionado: <b>'+esc(st().name)+'</b>':''}</p></div>`;
 function sq(q,rid){const r=$(rid),n=norm(q),d=dg(q);if(!n){r.innerHTML='';return}
- const L=S.students.filter(a=>norm(a.name).includes(n)||(d.length>=3&&dg(a.cpf).includes(d))).slice(0,8);
- r.innerHTML=L.map(a=>`<div class="rs" onclick="pickA('${a.id}')"><span><b>${esc(a.name)}</b> <span class="mu">${esc(a.cpf)}${a.goal?' · '+esc(a.goal):''}</span></span></div>`).join('')||'<div class="mu" style="padding:8px">Nenhum aluno encontrado.</div>'}
+ const L=S.students.filter(a=>norm(a.name).includes(n)||(d.length>=2&&String(a.codigo||'').includes(d))).slice(0,8);
+ r.innerHTML=L.map(a=>`<div class="rs" onclick="pickA('${a.id}')"><span><b>${esc(a.name)}</b> <span class="mu">Cód. ${esc(a.codigo)}${a.goal?' · '+esc(a.goal):''}</span></span></div>`).join('')||'<div class="mu" style="padding:8px">Nenhum aluno encontrado.</div>'}
 function pickA(i){S.sid=i;save();R()}
 document.addEventListener('click',e=>{if(!e.target.closest('.sres,#hq,#sq1'))document.querySelectorAll('.sres').forEach(x=>x.innerHTML='')});
 function fit(){const w=$('pvz');if(w)w.style.zoom=Math.min(1,(w.parentElement.clientWidth-32)/794)}
@@ -198,10 +206,11 @@ const gt=e=>{const c=S.ci[S.sid];return c.it[e]=c.it[e]||{}};
 function sy(t){const L=t.sets.filter(x=>x.c||x.r);t.c=Math.max(0,...L.map(x=>+x.c||0))||'';t.r=L.map(x=>x.r||0).join('/')}
 function cs(e,k,f,x){const t=gt(e);t.sets[k][f]=x;sy(t);save()}
 function ci(e,k,x){const c=S.ci[S.sid];(c.it[e]=c.it[e]||{})[k]=x;save()}
-function checkin(){const s=st(),p=latestPlan(s.id),c=S.ci[s.id],y=p.days.find(z=>z.id==c.day),items=y.ex.map(e=>({ex:e.id,n:e.n,...(c.it[e.id]||{})})).filter(x=>x.c||x.r||x.o);
+async function checkin(){const s=st(),p=latestPlan(s.id),c=S.ci[s.id],y=p.days.find(z=>z.id==c.day),items=y.ex.map(e=>({ex:e.id,n:e.n,...(c.it[e.id]||{})})).filter(x=>x.c||x.r||x.o||(x.sets||[]).some(z=>z.c||z.r));
  if(!items.length)return alert('Anote carga, repetições ou observações de ao menos um exercício.');
- S.checkins.push({id:uid(),sid:s.id,plan:p.id,day:y.id,dn:y.n,date:today(),at:new Date().toISOString(),items,obs:c.obs||''});
- S.ci[s.id]={day:c.day,it:{},obs:''};save();alert('Check-in registrado! Bom treino 💪');R()}
+ try{const r=await api('aluno',{method:'POST',body:JSON.stringify({act:'checkin',c:{plan:p.id,day:y.id,dn:y.n,date:today(),items,obs:c.obs||''}})});
+  S.checkins.push(r.checkin);S.ci[s.id]={day:c.day,it:{},obs:''};save();alert('Check-in registrado! Bom treino 💪');R()}
+ catch(e){alert('Não foi possível registrar o check-in: '+e.message+'\nSuas anotações continuam salvas neste aparelho. Tente de novo.')}}
 function vHist(s){const L=S.checkins.filter(c=>c.sid==s.id),ev={};L.forEach(c=>c.items.forEach(i=>{if(i.c||i.r)(ev[i.n]=ev[i.n]||[]).push(`${fd(c.date)}: ${fmtSets(i)}`)}));
  return `<div class="card tw"><h3>Evolução por exercício — ${esc(s.name)}</h3><table><tr><th>Exercício</th><th>Carga × reps a cada check-in</th></tr>${Object.entries(ev).map(([n,a])=>`<tr><td>${esc(n)}</td><td>${a.map(esc).join(' → ')}</td></tr>`).join('')||'<tr><td colspan="2" class="mu">Sem check-ins ainda.</td></tr>'}</table></div>
 <div class="card tw"><h3>Check-ins (${L.length})</h3>${L.slice().reverse().map(c=>`<details><summary>${fd(c.date)} · ${esc(c.dn)}</summary><table><tr><th>Exercício</th><th>Carga</th><th>Reps</th><th>Sensações</th></tr>${c.items.map(i=>`<tr><td>${esc(i.n)}</td>${i.sets&&i.sets.length?`<td colspan="2">${esc(fmtSets(i))}</td>`:`<td>${esc(i.c)} kg</td><td>${esc(i.r)}</td>`}<td>${esc(i.o)}</td></tr>`).join('')}</table>${c.obs?`<p class="mu">Observações: ${esc(c.obs)}</p>`:''}</details>`).join('')||'<p class="mu">Nenhum check-in registrado.</p>'}</div>`}
@@ -215,10 +224,12 @@ function vAg(){const al=A.role=='aluno',s=st(),L=(al?S.ag.filter(b=>b.sid==s.id)
  const po=S.profs.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
  return `<div class="card"><h3>Novo agendamento</h3><div class="row c2">${al?'':`<div><label>Aluno</label><select id="ag_s">${S.students.map(a=>`<option value="${a.id}" ${a.id==S.sid?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`}<div><label>Professor</label><select id="ag_p" onchange="busy()">${po}</select></div><div><label>Data</label><input id="ag_d" type="date" min="${today()}" value="${today()}" onchange="busy()"></div><div><label>Horário</label><input id="ag_t" type="time"></div><div><label>Duração</label><select id="ag_u"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="90">90 min</option></select></div><div style="flex:2 1 200px"><label>Local</label><input id="ag_l" placeholder="Ex.: academia, unidade, sala"></div></div><p class="mu" id="ag_b"></p><button class="btn" onclick="agAdd()">Agendar</button></div>
 <div class="card tw"><h3>${al?'Meus agendamentos':'Agenda (todos os alunos)'}</h3>${al?'<p class="mu">Para alterar ou cancelar um agendamento, fale com o professor.</p>':''}<table><tr>${al?'':'<th>Aluno</th>'}<th>Professor</th><th>Data</th><th>Horário</th><th>Duração</th><th>Local</th>${al?'':'<th></th>'}</tr>${L.map(b=>al?`<tr><td>${esc(profName(b.pid))}</td><td>${fd(b.date)}</td><td>${esc(b.time)}</td><td>${esc(b.dur)} min</td><td>${esc(b.loc)}</td></tr>`:`<tr><td>${esc((S.students.find(a=>a.id==b.sid)||{}).name)}</td><td><select onchange="agUp('${b.id}','pid',this.value)">${S.profs.map(p=>`<option value="${p.id}" ${p.id==b.pid?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td><td><input type="date" value="${b.date}" onchange="agUp('${b.id}','date',this.value)"></td><td><input type="time" value="${b.time}" onchange="agUp('${b.id}','time',this.value)"></td><td><select onchange="agUp('${b.id}','dur',this.value)">${[30,45,60,90].map(n=>`<option value="${n}" ${n==b.dur?'selected':''}>${n} min</option>`).join('')}</select></td><td><input value="${esc(b.loc)}" onchange="agUp('${b.id}','loc',this.value)"></td><td><button class="btn d" onclick="agDel('${b.id}')">×</button></td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum agendamento.</td></tr>'}</table></div>`}
-function agAdd(){const al=A.role=='aluno',b={id:uid(),sid:al?S.sid:v('ag_s'),pid:v('ag_p'),date:v('ag_d'),time:v('ag_t'),dur:v('ag_u'),loc:v('ag_l').trim(),at:new Date().toISOString()};
+async function agAdd(){const al=A.role=='aluno',b={id:uid(),sid:al?S.sid:v('ag_s'),pid:v('ag_p'),date:v('ag_d'),time:v('ag_t'),dur:v('ag_u'),loc:v('ag_l').trim(),at:new Date().toISOString()};
  if(!b.sid||!b.pid||!b.date||!b.time||!b.loc)return alert('Preencha professor, data, horário e local.');
  if(al&&new Date(b.date+'T'+b.time)<new Date())return alert('Escolha uma data e um horário futuros.');
- const m=conflict(b);if(m)return alert(m);S.ag.push(b);save();alert('Agendamento registrado!');R()}
+ const m=conflict(b);if(m)return alert(m);
+ if(al){try{const r=await api('aluno',{method:'POST',body:JSON.stringify({act:'agendar',b})});S.ag.push(r.ag);alert('Agendamento registrado!');R()}catch(e){alert(e.message);refresh()}return}
+ S.ag.push(b);save();alert('Agendamento registrado!');R()}
 function agUp(i,k,x){if(A.role!='prof')return;const b=S.ag.find(z=>z.id==i),n={...b,[k]:x};if(!n.date||!n.time||!n.loc.trim()){R();return}const m=conflict(n,i);if(m){alert(m);R();return}Object.assign(b,n);save();R()}
 function agDel(i){if(A.role=='prof'&&confirm('Cancelar este agendamento?')){S.ag=S.ag.filter(b=>b.id!=i);save();R()}}
 function vProf(){return `<div class="card"><h3>Novo professor</h3><div class="row"><div style="flex:2 1 200px"><label>Nome</label><input id="pf_n"></div><div><label>Telefone</label><input id="pf_t"></div><div><label>Especialidade / CREF</label><input id="pf_e"></div></div><div class="mt"><button class="btn" onclick="addProf()">Cadastrar professor</button></div></div>
@@ -309,5 +320,5 @@ function savePlan(){const d=D();if(!d.days.length){alert('Adicione ao menos uma 
 function vSalvos(){const L=S.plans.filter(p=>!S.sid||p.sid==S.sid);return `<div class="card"><h3>Treinos salvos</h3><button class="btn g" onclick="S.d={pid:'',name:'',obs:'',days:[]};S.tab='treino';save();R()">Novo treino (limpar tela)</button>${L.map(p=>{const a=S.students.find(x=>x.id==p.sid);return `<div class="ex"><div class="bd"><b>${esc(p.name)}</b><div class="mu">${esc(a?a.name:'')} · ${esc(p.date)} · ${p.days.length} sessões</div></div><button class="btn g" onclick="loadPlan('${p.id}')">Carregar</button><button class="btn d" onclick="delPlan('${p.id}')">Excluir</button></div>`}).join('')||'<p class="mu">Nenhum treino salvo.</p>'}</div>`}
 function loadPlan(i){const p=S.plans.find(x=>x.id==i);S.sid=p.sid;S.d=JSON.parse(JSON.stringify({pid:p.id,name:p.name,obs:p.obs,days:p.days}));S.tab='treino';save();R()}
 function delPlan(i){if(confirm('Excluir treino salvo?')){S.plans=S.plans.filter(p=>p.id!=i);if(D().pid==i)D().pid='';save();R()}}
-R();if(A.role=='prof'&&sessionStorage.getItem('mibT'))pull();
+if(A.role=='aluno')loadA=true;R();if(A.role=='prof'&&sessionStorage.getItem('mibT'))pull();if(A.role=='aluno')pullAluno().then(()=>{loadA=false;R()},()=>{loadA=false;setA({})});
 </script></body></html>
