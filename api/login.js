@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
       await new Promise((r) => setTimeout(r, 600));
       return res.status(401).json({ erro: 'Senha incorreta.' });
     }
-    res.json({ token: token() });
+    res.json({ token: token('p', 'prof') });
   } catch (e) {
     res.status(500).json({ erro: e.message });
   }
